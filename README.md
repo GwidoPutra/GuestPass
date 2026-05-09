@@ -67,5 +67,3 @@ Aplikasi Android khusus untuk petugas di pintu masuk acara.
 *   **Source Code:** Repositori GitHub dengan struktur kode modular dan *clean code*.
 
 ---
-**Author:** owi  
-**Project Status:** Selection Project - Project Based Test
