@@ -1,0 +1,35 @@
+## [ .NET Core / C# ]
+# Folder hasil compile yang wajib di-ignore
+[Bb]in/
+[Oo]bj/
+
+# File hasil publish
+publish/
+out/
+
+## [ Konfigurasi & Keamanan ]
+# Simpan koneksi asli Supabase di sini (Jangan di-commit!)
+appsettings.Development.json
+
+# File rahasia bawaan .NET
+usersecrets.json
+
+## [ Editor & IDE ]
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Visual Studio
+.vs/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+
+## [ Sistem Operasi ]
+Thumbs.db
+.DS_Store
