@@ -1,4 +1,4 @@
-namespace GuestPass.API.Models;
+namespace GuestPass.Api.Models;
 
 public class Event
 {

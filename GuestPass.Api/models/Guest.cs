@@ -1,7 +1,6 @@
-// Author: Gwido
-namespace GuestPass.Api.models;
+namespace GuestPass.Api.Models;
 
-public class User
+public class Guest
 {
     public int Id { get; set; }
     public string Username { get; set; } = string.Empty;
