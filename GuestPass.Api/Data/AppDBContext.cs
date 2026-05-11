@@ -43,7 +43,7 @@ public class AppDbContext : DbContext
         {
             entity.Property(p => p.Role)
                 .HasColumnName("role")
-                .HasColumnType("user_role"); 
+                .HasColumnType("user_role");
         });
 
         modelBuilder.Entity<Guest>(entity =>
@@ -52,6 +52,6 @@ public class AppDbContext : DbContext
             entity.Property(g => g.QRCodeToken).HasColumnName("qrcodetoken");
             entity.Property(g => g.EventId).HasColumnName("eventid");
         });
-        
+
     }
 }

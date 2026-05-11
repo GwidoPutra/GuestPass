@@ -49,10 +49,14 @@ namespace GuestPass.Api.Controllers
         public IActionResult Login(LoginRequest request)
         {
             var user = _context.Profiles.FirstOrDefault(u => u.Email == request.Email);
+            if (user == null)
+                return Unauthorized("User tidak ditemukan di DB.");
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                return Unauthorized("Email atau password salah.");
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Unauthorized("Password salah. Hash di DB: " + user.PasswordHash);
 
+            if (!user.IsApproved)
+                return Unauthorized("Akun belum di-approve.");
             var token = GenerateJwtToken(user);
             return Ok(new { token = token, role = user.Role });
         }
@@ -62,7 +66,7 @@ namespace GuestPass.Api.Controllers
             var jwtSettings = _config.GetSection("Jwt");
             var keyStr = jwtSettings["Key"] ?? "KunciRahasiaDefaultYangSangatPanjang123!";
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
-            
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

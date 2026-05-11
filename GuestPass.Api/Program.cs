@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "KunciRahasiaDefaultMinimal32Karakter");
 
-builder.Services.AddControllers(); 
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -46,11 +46,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // -----------------------------------------
 
 var app = builder.Build();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GuestPass API v1");
+        // Ini memastikan tombol Authorize tidak tertutup elemen lain
+        c.DisplayRequestDuration();
+    });
 }
 
 app.UseHttpsRedirection();
@@ -58,6 +62,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers(); 
+app.MapControllers();
 
 app.Run();

@@ -24,7 +24,7 @@ public class GuestController : ControllerBase // Pastikan 'public' ada di sini
     {
         // Generate Token Unik 
         guest.QRCodeToken = "GP-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
-        
+
         _context.Guests.Add(guest);
         await _context.SaveChangesAsync();
 
