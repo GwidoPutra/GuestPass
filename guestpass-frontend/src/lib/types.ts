@@ -61,3 +61,14 @@ export interface GuestCreateRequest {
   name: string;
   email: string;
 }
+
+// Profile/Committee DTOs
+export interface Profile {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  role: string | null;
+  isApproved: boolean;
+  createdAt: string;
+}

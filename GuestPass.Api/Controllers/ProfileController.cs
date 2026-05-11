@@ -69,4 +69,26 @@ public class ProfileController : ControllerBase
 
         return NoContent();
     }
+
+    // PUT: api/Profile/{id}/approve (Toggle approval status)
+    [HttpPut("{id}/approve")]
+    public async Task<IActionResult> ToggleApproval(Guid id)
+    {
+        var profile = await _context.Profiles.FindAsync(id);
+        if (profile == null) return NotFound();
+
+        profile.IsApproved = !profile.IsApproved;
+        await _context.SaveChangesAsync();
+
+        return Ok(new ProfileResponse
+        {
+            Id = profile.Id,
+            Username = profile.Username,
+            Email = profile.Email,
+            FullName = profile.FullName,
+            Role = profile.Role,
+            IsApproved = profile.IsApproved,
+            CreatedAt = profile.CreatedAt
+        });
+    }
 }
