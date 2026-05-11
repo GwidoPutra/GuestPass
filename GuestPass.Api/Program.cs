@@ -3,6 +3,7 @@ using GuestPass.Api.Data;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql; // Tambahkan ini agar tidak error CS0103
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,8 +36,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// --- PENAMBAHAN KONFIGURASI DATASOURCE ---
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+var dataSource = dataSourceBuilder.Build();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(dataSource));
+// -----------------------------------------
 
 var app = builder.Build();
 
