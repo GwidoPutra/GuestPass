@@ -1,9 +1,10 @@
-namespace GuestPass.API.DTOs;
-
-public class RegisterRequest
+namespace GuestPass.Api.DTOs
 {
-    public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Role { get; set; } = "panitia";
+    public class RegisterRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Fullname { get; set; } = string.Empty;
+    }
 }

@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using GuestPass.Data;
-using GuestPass.Models;
-using GuestPass.DTOs;
+using GuestPass.Api.Data;
+using GuestPass.Api.Models;
+using GuestPass.Api.DTOs;
 using BCrypt.Net;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace GuestPass.Controllers
+namespace GuestPass.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -26,20 +26,20 @@ namespace GuestPass.Controllers
         [HttpPost("register")]
         public IActionResult Register(RegisterRequest request)
         {
-            // Cek apakah email sudah ada
-            if (_context.profiles.Any(u => u.email == request.Email))
+            // Gunakan 'Profiles' dan 'Email' (PascalCase)
+            if (_context.Profiles.Any(u => u.Email == request.Email))
                 return BadRequest("Email sudah terdaftar.");
 
             var newProfile = new Profile
             {
-                username = request.Username,
-                email = request.Email,
-                fullname = request.Fullname,
-                passwordhash = BCrypt.Net.BCrypt.HashPassword(request.Password), // Hash password!
-                role = "Panitia"
+                Username = request.Username,
+                Email = request.Email,
+                Fullname = request.Fullname,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = "Panitia"
             };
 
-            _context.profiles.Add(newProfile);
+            _context.Profiles.Add(newProfile);
             _context.SaveChanges();
 
             return Ok("Registrasi berhasil.");
@@ -48,25 +48,26 @@ namespace GuestPass.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginRequest request)
         {
-            var user = _context.profiles.FirstOrDefault(u => u.email == request.Email);
+            var user = _context.Profiles.FirstOrDefault(u => u.Email == request.Email);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.passwordhash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Unauthorized("Email atau password salah.");
 
             var token = GenerateJwtToken(user);
-            return Ok(new { token = token, role = user.role });
+            return Ok(new { token = token, role = user.Role });
         }
 
         private string GenerateJwtToken(Profile user)
         {
             var jwtSettings = _config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
+            var keyStr = jwtSettings["Key"] ?? "KunciRahasiaDefaultYangSangatPanjang123!";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
             
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.id.ToString()),
-                new Claim(ClaimTypes.Email, user.email),
-                new Claim(ClaimTypes.Role, user.role)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var token = new JwtSecurityToken(

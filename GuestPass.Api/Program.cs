@@ -4,11 +4,11 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
 var builder = WebApplication.CreateBuilder(args);
 
-// Tambahkan servis agar Controller terdeteksi
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "KunciRahasiaDefaultMinimal32Karakter");
+
 builder.Services.AddControllers(); 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        ClockSkew = TimeSpan.Zero // Token langsung expired saat waktunya habis
+        ClockSkew = TimeSpan.Zero
     };
 });
 
@@ -51,7 +51,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Aktifkan route Controller (Auth, Event, dll)
 app.MapControllers(); 
 
 app.Run();
