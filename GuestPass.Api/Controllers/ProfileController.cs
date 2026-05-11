@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using GuestPass.Api.Data;
-using GuestPass.Api.Models;
+using GuestPass.Api.DTOs;
 
 namespace GuestPass.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProfileController : ControllerBase
@@ -16,23 +18,43 @@ public class ProfileController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Profile (Ambil Semua Data)
+    // GET: api/Profile (Ambil Semua Data tanpa PasswordHash)
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Profile>>> GetProfiles()
+    public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetProfiles()
     {
-        return await _context.Profiles.ToListAsync();
+        var profiles = await _context.Profiles
+            .Select(p => new ProfileResponse
+            {
+                Id = p.Id,
+                Username = p.Username,
+                Email = p.Email,
+                FullName = p.FullName,
+                Role = p.Role,
+                IsApproved = p.IsApproved,
+                CreatedAt = p.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(profiles);
     }
 
-    // POST: api/Profile (Tambah Data / Register)
-    [HttpPost]
-    public async Task<ActionResult<Profile>> PostProfile(Profile profile)
+    // GET: api/Profile/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProfileResponse>> GetProfile(Guid id)
     {
-        profile.Id = Guid.NewGuid();
-        profile.CreatedAt = DateTime.UtcNow;
-        _context.Profiles.Add(profile);
-        await _context.SaveChangesAsync();
+        var profile = await _context.Profiles.FindAsync(id);
+        if (profile == null) return NotFound();
 
-        return CreatedAtAction(nameof(GetProfiles), new { id = profile.Id }, profile);
+        return Ok(new ProfileResponse
+        {
+            Id = profile.Id,
+            Username = profile.Username,
+            Email = profile.Email,
+            FullName = profile.FullName,
+            Role = profile.Role,
+            IsApproved = profile.IsApproved,
+            CreatedAt = profile.CreatedAt
+        });
     }
 
     // DELETE: api/Profile/{id} (Hapus Data)

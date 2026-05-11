@@ -3,17 +3,24 @@ using GuestPass.Api.Data;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql; // Tambahkan ini agar tidak error CS0103
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// JWT Settings
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "KunciRahasiaDefaultMinimal32Karakter");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "KunciRahasiaDefaultMinimal32Karakter");
 
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -36,32 +43,28 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// --- PENAMBAHAN KONFIGURASI DATASOURCE ---
+// Database Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(dataSource));
-// -----------------------------------------
 
 var app = builder.Build();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "GuestPass API v1");
-        // Ini memastikan tombol Authorize tidak tertutup elemen lain
-        c.DisplayRequestDuration();
     });
 }
 
-app.UseHttpsRedirection();
-
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

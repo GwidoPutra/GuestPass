@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using GuestPass.Api.Data;
 using GuestPass.Api.Models;
 using GuestPass.Api.DTOs;
-using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -24,39 +24,47 @@ namespace GuestPass.Api.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register(RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest registerDto)
         {
-            // Gunakan 'Profiles' dan 'Email' (PascalCase)
-            if (_context.Profiles.Any(u => u.Email == request.Email))
-                return BadRequest("Email sudah terdaftar.");
+            if (await _context.Profiles.AnyAsync(u => u.Email == registerDto.Email))
+                return BadRequest("Email sudah terdaftar!");
 
-            var newProfile = new Profile
+            var user = new Profile
             {
-                Username = request.Username,
-                Email = request.Email,
-                Fullname = request.Fullname,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = "Panitia"
+                Username = registerDto.Username,
+                Email = registerDto.Email,
+                FullName = registerDto.FullName,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                IsApproved = false
+                // Role, Id, dan CreatedAt TIDAK boleh diisi di sini
             };
 
-            _context.Profiles.Add(newProfile);
-            _context.SaveChanges();
-
-            return Ok("Registrasi berhasil.");
+            try
+            {
+                _context.Profiles.Add(user);
+                await _context.SaveChangesAsync();
+                return Ok("User berhasil dibuat");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequest request)
         {
-            var user = _context.Profiles.FirstOrDefault(u => u.Email == request.Email);
+            var user = await _context.Profiles.FirstOrDefaultAsync(u => u.Email == request.Email);
+
             if (user == null)
-                return Unauthorized("User tidak ditemukan di DB.");
+                return Unauthorized("User tidak ditemukan.");
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                return Unauthorized("Password salah. Hash di DB: " + user.PasswordHash);
+                return Unauthorized("Password salah.");
 
             if (!user.IsApproved)
                 return Unauthorized("Akun belum di-approve.");
+
             var token = GenerateJwtToken(user);
             return Ok(new { token = token, role = user.Role });
         }
@@ -71,7 +79,7 @@ namespace GuestPass.Api.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role ?? "panitia")
             };
 
             var token = new JwtSecurityToken(

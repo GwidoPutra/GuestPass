@@ -1,13 +1,37 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace GuestPass.Api.Models;
 
+[Table("guests")]
 public class Guest
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid EventId { get; set; } // Relasi ke Event
+    [Key]
+    [Column("id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
+
+    [Column("eventid")]
+    public Guid? EventId { get; set; }
+
+    [Column("name")]
     public string Name { get; set; } = string.Empty;
+
+    [Column("email")]
     public string Email { get; set; } = string.Empty;
-    public string QRCodeToken { get; set; } = string.Empty; // Kode unik untuk QR
+
+    // Properti di C# tetap QRCodeToken agar Controller tidak error,
+    // tapi mapping ke kolom database 'qrcodetoken' sesuai schema SQL Anda.
+    [Column("qrcodetoken")]
+    public string QRCodeToken { get; set; } = string.Empty;
+
+    [Column("ischeckedin")]
     public bool IsCheckedIn { get; set; } = false;
-    public DateTime? CheckedInAt { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("checkedinat")]
+    public DateTimeOffset? CheckedInAt { get; set; }
+
+    [Column("createdat")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public DateTimeOffset CreatedAt { get; set; }
 }

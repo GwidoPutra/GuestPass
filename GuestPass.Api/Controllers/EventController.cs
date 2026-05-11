@@ -53,8 +53,6 @@ public class EventController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        @event.Id = Guid.NewGuid();
-        @event.CreatedAt = DateTime.UtcNow;
         @event.CreatedBy = Guid.Parse(userId); // Set pemilik event
         
         _context.Events.Add(@event);

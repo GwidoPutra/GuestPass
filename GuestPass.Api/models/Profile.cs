@@ -1,13 +1,36 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace GuestPass.Api.Models;
 
+[Table("profiles")]
 public class Profile
 {
-    public Guid Id { get; set; } = Guid.NewGuid(); // Default value agar tidak null
+    [Key]
+    [Column("id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
+
+    [Column("username")]
     public string Username { get; set; } = string.Empty;
+
+    [Column("email")]
     public string Email { get; set; } = string.Empty;
-    public string Fullname { get; set; } = string.Empty; // TAMBAHKAN INI
+
+    [Column("passwordhash")]
     public string PasswordHash { get; set; } = string.Empty;
-    public string Role { get; set; } = "panitia";
+
+    [Column("fullname")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Column("role")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public string? Role { get; set; }
+
+    [Column("isapproved")]
     public bool IsApproved { get; set; } = false;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("createdat")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public DateTimeOffset CreatedAt { get; set; }
 }
