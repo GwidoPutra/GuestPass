@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProfiles, toggleApproval, deleteProfile } from "@/lib/profile-service";
 import { Profile } from "@/lib/types";
+import { useToast } from "@/lib/toast-context";
 
 export default function CommitteesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -12,6 +13,7 @@ export default function CommitteesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -32,8 +34,9 @@ export default function CommitteesPage() {
     try {
       const updated = await toggleApproval(id);
       setProfiles(profiles.map((p) => (p.id === id ? updated : p)));
+      showToast(updated.isApproved ? "Akun berhasil di-approve." : "Approval berhasil di-revoke.", "success");
     } catch {
-      setError("Gagal mengubah status approval.");
+      showToast("Gagal mengubah status approval.", "error");
     } finally {
       setTogglingId(null);
     }
@@ -46,6 +49,7 @@ export default function CommitteesPage() {
       await deleteProfile(deleteId);
       setProfiles(profiles.filter((p) => p.id !== deleteId));
       setDeleteId(null);
+      showToast("Akun berhasil dihapus.", "success");
     } catch {
       setError("Gagal menghapus akun.");
     } finally {

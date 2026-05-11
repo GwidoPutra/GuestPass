@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getEvents, deleteEvent } from "@/lib/event-service";
 import { Event } from "@/lib/types";
+import { useToast } from "@/lib/toast-context";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -11,6 +12,7 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { showToast } = useToast();
 
   const fetchEvents = async () => {
     try {
@@ -34,6 +36,7 @@ export default function EventsPage() {
       await deleteEvent(deleteId);
       setEvents(events.filter((e) => e.id !== deleteId));
       setDeleteId(null);
+      showToast("Event berhasil dihapus.", "success");
     } catch {
       setError("Gagal menghapus event.");
     } finally {

@@ -4,10 +4,12 @@ import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getEvent, updateEvent } from "@/lib/event-service";
+import { useToast } from "@/lib/toast-context";
 
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const id = params.id as string;
 
   const [name, setName] = useState("");
@@ -48,6 +50,7 @@ export default function EditEventPage() {
     setIsSaving(true);
     try {
       await updateEvent(id, { name, location, date: new Date(date).toISOString() });
+      showToast("Event berhasil diupdate!", "success");
       router.push(`/dashboard/events/${id}`);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {

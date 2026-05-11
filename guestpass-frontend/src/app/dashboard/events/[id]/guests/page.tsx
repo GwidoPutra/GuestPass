@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getGuests, deleteGuest, checkInGuest } from "@/lib/guest-service";
 import { getEvent } from "@/lib/event-service";
 import { Guest, Event } from "@/lib/types";
+import { useToast } from "@/lib/toast-context";
 
 export default function GuestsPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function GuestsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +46,7 @@ export default function GuestsPage() {
       await deleteGuest(deleteId);
       setGuests(guests.filter((g) => g.id !== deleteId));
       setDeleteId(null);
+      showToast("Tamu berhasil dihapus.", "success");
     } catch {
       setError("Gagal menghapus tamu.");
     } finally {
@@ -56,12 +59,13 @@ export default function GuestsPage() {
     try {
       const updated = await checkInGuest(guestId);
       setGuests(guests.map((g) => (g.id === guestId ? updated : g)));
+      showToast("Tamu berhasil di-check-in!", "success");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Gagal check-in tamu.");
+        showToast(axiosErr.response?.data || "Gagal check-in tamu.", "error");
       } else {
-        setError("Gagal check-in tamu.");
+        showToast("Gagal check-in tamu.", "error");
       }
     } finally {
       setCheckingIn(null);

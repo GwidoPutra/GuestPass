@@ -4,9 +4,11 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEvent } from "@/lib/event-service";
+import { useToast } from "@/lib/toast-context";
 
 export default function CreateEventPage() {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -26,6 +28,7 @@ export default function CreateEventPage() {
     setIsLoading(true);
     try {
       await createEvent({ name, location, date: new Date(date).toISOString() });
+      showToast("Event berhasil dibuat!", "success");
       router.push("/dashboard/events");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {

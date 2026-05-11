@@ -4,10 +4,12 @@ import { useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createGuest } from "@/lib/guest-service";
+import { useToast } from "@/lib/toast-context";
 
 export default function CreateGuestPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const eventId = params.id as string;
 
   const [name, setName] = useState("");
@@ -27,6 +29,7 @@ export default function CreateGuestPage() {
     setIsLoading(true);
     try {
       await createGuest({ eventId, name, email });
+      showToast("Tamu berhasil ditambahkan!", "success");
       router.push(`/dashboard/events/${eventId}/guests`);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
