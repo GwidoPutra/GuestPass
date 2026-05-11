@@ -43,3 +43,21 @@ export interface EventUpdateRequest {
   location: string;
   date: string;
 }
+
+// Guest DTOs
+export interface Guest {
+  id: string;
+  eventId: string | null;
+  name: string;
+  email: string;
+  qrCodeToken: string;
+  isCheckedIn: boolean;
+  checkedInAt: string | null;
+  createdAt: string;
+}
+
+export interface GuestCreateRequest {
+  eventId: string;
+  name: string;
+  email: string;
+}
