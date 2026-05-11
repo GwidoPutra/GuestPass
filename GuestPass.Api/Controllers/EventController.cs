@@ -3,10 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using GuestPass.Api.Data;
 using GuestPass.Api.Models;
+using System.Security.Claims; 
 
 namespace GuestPass.Api.Controllers;
+
 [Authorize]
 [Route("api/[controller]")]
+[ApiController] // untuk validasi model otomatis
 public class EventController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,7 +23,11 @@ public class EventController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Event>>> GetEvents()
     {
-        return await _context.Events.ToListAsync();
+        // Filter agar panitia hanya melihat event buatannya sendiri
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return await _context.Events
+            .Where(e => e.CreatedBy == userId)
+            .ToListAsync();
     }
 
     // GET: api/Event/{id}
@@ -28,7 +35,13 @@ public class EventController : ControllerBase
     public async Task<ActionResult<Event>> GetEvent(Guid id)
     {
         var @event = await _context.Events.FindAsync(id);
+
         if (@event == null) return NotFound();
+
+        // Proteksi supaya tidak bisa mengintip event orang lain lewat ID
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (@event.CreatedBy != userId) return Forbid();
+
         return @event;
     }
 
@@ -36,8 +49,13 @@ public class EventController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Event>> PostEvent(Event @event)
     {
+        // Ambil ID user dari token JWT secara otomatis
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
         @event.Id = Guid.NewGuid();
         @event.CreatedAt = DateTime.UtcNow;
+        @event.CreatedBy = Guid.Parse(userId); // Set pemilik event
         
         _context.Events.Add(@event);
         await _context.SaveChangesAsync();
@@ -51,6 +69,10 @@ public class EventController : ControllerBase
     {
         var @event = await _context.Events.FindAsync(id);
         if (@event == null) return NotFound();
+
+        // Proteksi supaya tidak bisa menghapus event milik orang lain
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (@event.CreatedBy != userId) return Forbid();
 
         _context.Events.Remove(@event);
         await _context.SaveChangesAsync();

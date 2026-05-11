@@ -1,40 +1,32 @@
-using Microsoft.EntityFrameworkCore;
-using GuestPass.Api.Models;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace GuestPass.Api.Data;
-
-public class AppDbContext : DbContext
+protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    base.OnModelCreating(modelBuilder);
+
+    foreach (var entity in modelBuilder.Model.GetEntityTypes())
     {
+        var tableName = entity.GetTableName();
+        if (!string.IsNullOrEmpty(tableName))
+        {
+            entity.SetTableName(tableName.ToLower());
+        }
+
+        foreach (var property in entity.GetProperties())
+        {
+            property.SetColumnName(property.Name.ToLower());
+        }
     }
 
-    // Daftar Tabel
-    public DbSet<Profile> Profiles { get; set; }
-    public DbSet<Event> Events { get; set; }
-    public DbSet<Guest> Guests { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    modelBuilder.Entity<Event>(entity =>
     {
-        base.OnModelCreating(modelBuilder);
+        entity.Property(e => e.CreatedBy).HasColumnName("ownerid");
+        
+        entity.Property(e => e.EventDate).HasColumnName("date");
+        
+    });
 
-        // Otomatisasi Penamaan PostgreSQL (Lowercasing)
-        foreach (var entity in modelBuilder.Model.GetEntityTypes())
-        {
-            // 1. Paksa nama tabel menjadi lowercase (Events -> events)
-            var tableName = entity.GetTableName();
-            if (!string.IsNullOrEmpty(tableName))
-            {
-                entity.SetTableName(tableName.ToLower());
-            }
-
-            // 2. Paksa semua nama kolom menjadi lowercase (Id -> id, Name -> name)
-            foreach (var property in entity.GetProperties())
-            {
-                // Mengambil nama property asal (PascalCase) dan menjadikannya lowercase
-                property.SetColumnName(property.Name.ToLower());
-            }
-        }
-   }
+    modelBuilder.Entity<Guest>(entity =>
+    {
+        entity.Property(g => g.IsCheckedIn).HasColumnName("ischeckedin");
+        entity.Property(g => g.QRCodeToken).HasColumnName("qrcodetoken");
+    });
 }
