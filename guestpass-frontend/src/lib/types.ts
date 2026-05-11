@@ -21,3 +21,25 @@ export interface AuthUser {
   token: string;
   role: string;
 }
+
+// Event DTOs
+export interface Event {
+  id: string;
+  name: string;
+  location: string;
+  date: string;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface EventCreateRequest {
+  name: string;
+  location: string;
+  date: string;
+}
+
+export interface EventUpdateRequest {
+  name: string;
+  location: string;
+  date: string;
+}

@@ -61,6 +61,24 @@ public class EventController : ControllerBase
         return CreatedAtAction(nameof(GetEvent), new { id = @event.Id }, @event);
     }
 
+    // PUT: api/Event/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutEvent(Guid id, Event updatedEvent)
+    {
+        var @event = await _context.Events.FindAsync(id);
+        if (@event == null) return NotFound();
+
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (@event.CreatedBy != userId) return Forbid();
+
+        @event.Name = updatedEvent.Name;
+        @event.Location = updatedEvent.Location;
+        @event.Date = updatedEvent.Date;
+
+        await _context.SaveChangesAsync();
+        return Ok(@event);
+    }
+
     // DELETE: api/Event/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteEvent(Guid id)
