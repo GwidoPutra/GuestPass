@@ -3,6 +3,9 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { LogOut, Menu, X, LayoutDashboard, Calendar, Users } from "lucide-react";
 
 export function TopBar() {
   const { user, logout } = useAuth();
@@ -15,60 +18,52 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b border-foreground/10 bg-background">
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        {/* Mobile menu button */}
-        <button
-          type="button"
+    <header className="sticky top-0 z-10 h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-full items-center justify-between px-4 sm:px-6">
+        {/* Mobile menu */}
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden rounded-md p-2 text-foreground/70 hover:bg-foreground/5"
+          className="md:hidden"
           aria-label="Toggle menu"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </button>
+          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </Button>
 
         {/* Mobile logo */}
-        <h1 className="md:hidden text-lg font-bold text-foreground">GuestPass</h1>
+        <div className="md:hidden flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+            <span className="text-[10px] font-bold text-primary-foreground">G</span>
+          </div>
+          <span className="text-sm font-semibold">GuestPass</span>
+        </div>
 
-        {/* Spacer for desktop */}
+        {/* Desktop spacer */}
         <div className="hidden md:block" />
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 capitalize">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="capitalize text-xs">
             {user?.role || "user"}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors"
-          >
-            Logout
-          </button>
+          </Badge>
+          <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Logout">
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Mobile navigation */}
+      {/* Mobile nav */}
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-foreground/10 px-4 py-3 space-y-1">
-          <a
-            href="/dashboard"
-            className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-foreground/5"
-          >
-            Dashboard
+        <nav className="md:hidden border-t border-border bg-background px-3 py-2 space-y-0.5">
+          <a href="/dashboard" className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <LayoutDashboard className="w-4 h-4" /> Overview
           </a>
-          <a
-            href="/dashboard/events"
-            className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-foreground/5"
-          >
-            Events
+          <a href="/dashboard/events" className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Calendar className="w-4 h-4" /> Events
           </a>
-          <a
-            href="/dashboard/committees"
-            className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-foreground/5"
-          >
-            Panitia
+          <a href="/dashboard/committees" className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Users className="w-4 h-4" /> Committees
           </a>
         </nav>
       )}

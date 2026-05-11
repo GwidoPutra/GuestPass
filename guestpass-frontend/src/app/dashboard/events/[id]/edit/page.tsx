@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getEvent, updateEvent } from "@/lib/event-service";
 import { useToast } from "@/lib/toast-context";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default function EditEventPage() {
   const params = useParams();
@@ -25,12 +30,9 @@ export default function EditEventPage() {
         const data = await getEvent(id);
         setName(data.name);
         setLocation(data.location);
-        // Convert ISO date to datetime-local format
-        const eventDate = new Date(data.date);
-        const localDate = eventDate.toISOString().slice(0, 16);
-        setDate(localDate);
+        setDate(new Date(data.date).toISOString().slice(0, 16));
       } catch {
-        setError("Event tidak ditemukan.");
+        setError("Event not found.");
       } finally {
         setIsLoading(false);
       }
@@ -41,23 +43,19 @@ export default function EditEventPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!name || !location || !date) {
-      setError("Semua field harus diisi.");
-      return;
-    }
+    if (!name || !location || !date) { setError("All fields are required."); return; }
 
     setIsSaving(true);
     try {
       await updateEvent(id, { name, location, date: new Date(date).toISOString() });
-      showToast("Event berhasil diupdate!", "success");
+      showToast("Event updated.", "success");
       router.push(`/dashboard/events/${id}`);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Gagal mengupdate event.");
+        setError(axiosErr.response?.data || "Failed to update.");
       } else {
-        setError("Terjadi kesalahan jaringan.");
+        setError("Network error.");
       }
     } finally {
       setIsSaving(false);
@@ -66,90 +64,48 @@ export default function EditEventPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-6 w-32 bg-foreground/5 rounded animate-pulse" />
-        <div className="h-64 bg-foreground/5 rounded animate-pulse" />
+      <div className="max-w-lg space-y-4">
+        <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-64 bg-muted rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href={`/dashboard/events/${id}`}
-          className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-        >
-          &larr; Kembali ke Detail Event
-        </Link>
-        <h2 className="mt-2 text-2xl font-bold text-foreground">Edit Event</h2>
-      </div>
+    <div className="max-w-lg space-y-6">
+      <Link href={`/dashboard/events/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to event
+      </Link>
 
-      <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-            {error}
-          </div>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Event</CardTitle>
+          <CardDescription>Update event details below.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
 
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-foreground">
-            Nama Event
-          </label>
-          <input
-            id="name"
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Event Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date & Time</Label>
+              <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
 
-        <div>
-          <label htmlFor="location" className="block text-sm font-medium text-foreground">
-            Lokasi
-          </label>
-          <input
-            id="location"
-            type="text"
-            required
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="date" className="block text-sm font-medium text-foreground">
-            Tanggal
-          </label>
-          <input
-            id="date"
-            type="datetime-local"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
-          <Link
-            href={`/dashboard/events/${id}`}
-            className="rounded-md border border-foreground/20 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-          >
-            Batal
-          </Link>
-        </div>
-      </form>
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</Button>
+              <Link href={`/dashboard/events/${id}`} className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

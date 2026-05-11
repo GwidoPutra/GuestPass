@@ -4,40 +4,50 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getEvent, deleteEvent } from "@/lib/event-service";
-import { Event } from "@/lib/types";
+import { getGuests } from "@/lib/guest-service";
+import { Event, Guest } from "@/lib/types";
+import { useToast } from "@/lib/toast-context";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, MapPin, Calendar, Users, UserCheck, Clock, Pencil, Trash2 } from "lucide-react";
 
 export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const id = params.id as string;
 
   const [event, setEvent] = useState<Event | null>(null);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [showDelete, setShowDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getEvent(id);
-        setEvent(data);
+        const [eventData, guestsData] = await Promise.all([getEvent(id), getGuests(id)]);
+        setEvent(eventData);
+        setGuests(guestsData);
       } catch {
-        setError("Event tidak ditemukan.");
+        setError("Event not found.");
       } finally {
         setIsLoading(false);
       }
     };
-    fetchEvent();
+    fetchData();
   }, [id]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await deleteEvent(id);
+      showToast("Event deleted.", "success");
       router.push("/dashboard/events");
     } catch {
-      setError("Gagal menghapus event.");
+      setError("Failed to delete event.");
       setIsDeleting(false);
     }
   };
@@ -45,141 +55,130 @@ export default function EventDetailPage() {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("id-ID", {
       weekday: "long",
-      year: "numeric",
-      month: "long",
       day: "numeric",
+      month: "long",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
+  const checkedInCount = guests.filter((g) => g.isCheckedIn).length;
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-6 w-32 bg-foreground/5 rounded animate-pulse" />
-        <div className="h-48 bg-foreground/5 rounded animate-pulse" />
+      <div className="space-y-4 max-w-3xl">
+        <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-40 bg-muted rounded-lg animate-pulse" />
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="space-y-4">
-        <Link
-          href="/dashboard/events"
-          className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-        >
-          &larr; Kembali ke Events
+      <div className="max-w-3xl space-y-4">
+        <Link href="/dashboard/events" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to events
         </Link>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-          {error || "Event tidak ditemukan."}
-        </div>
+        <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Link
-        href="/dashboard/events"
-        className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-      >
-        &larr; Kembali ke Events
+    <div className="space-y-6 max-w-3xl">
+      <Link href="/dashboard/events" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to events
       </Link>
 
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">{event.name}</h2>
-          <p className="mt-1 text-sm text-foreground/60">
-            Dibuat pada {formatDate(event.createdAt)}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
+            {event.name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold">{event.name}</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Created {formatDate(event.createdAt)}</p>
+          </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            href={`/dashboard/events/${id}/edit`}
-            className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-colors"
-          >
-            Edit
+          <Link href={`/dashboard/events/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
           </Link>
-          <button
-            onClick={() => setShowDelete(true)}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-          >
-            Hapus
-          </button>
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowDelete(true)}>
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+          </Button>
         </div>
       </div>
 
-      {/* Detail Card */}
-      <div className="rounded-lg border border-foreground/10 p-6 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Lokasi</p>
-            <p className="mt-1 text-sm text-foreground">{event.location}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Tanggal</p>
-            <p className="mt-1 text-sm text-foreground">{formatDate(event.date)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Guest Stats Placeholder */}
-      <div className="rounded-lg border border-foreground/10 p-6">
-        <h3 className="text-lg font-semibold text-foreground">Statistik Tamu</h3>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-md bg-foreground/5 p-4">
-            <p className="text-xs font-medium text-foreground/60">Total Tamu</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">-</p>
-          </div>
-          <div className="rounded-md bg-green-50 p-4">
-            <p className="text-xs font-medium text-green-700">Sudah Check-in</p>
-            <p className="mt-1 text-2xl font-bold text-green-700">-</p>
-          </div>
-          <div className="rounded-md bg-amber-50 p-4">
-            <p className="text-xs font-medium text-amber-700">Belum Check-in</p>
-            <p className="mt-1 text-2xl font-bold text-amber-700">-</p>
-          </div>
-        </div>
-        <Link
-          href={`/dashboard/events/${id}/guests`}
-          className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-800"
-        >
-          Kelola Tamu &rarr;
-        </Link>
-      </div>
-
-      {/* Delete Modal */}
-      {showDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg border border-foreground/10">
-            <h3 className="text-lg font-semibold text-foreground">
-              Konfirmasi Hapus
-            </h3>
-            <p className="mt-2 text-sm text-foreground/60">
-              Apakah Anda yakin ingin menghapus event &quot;{event.name}&quot;? Semua data tamu terkait juga akan dihapus.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDelete(false)}
-                disabled={isDeleting}
-                className="rounded-md border border-foreground/20 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {isDeleting ? "Menghapus..." : "Hapus"}
-              </button>
+      {/* Details */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Location</p>
+                <p className="text-sm font-medium">{event.location}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Date & Time</p>
+                <p className="text-sm font-medium">{formatDate(event.date)}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
+
+      {/* Guest stats */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base font-medium">Guest Statistics</CardTitle>
+          <Link href={`/dashboard/events/${id}/guests`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              <Users className="w-3.5 h-3.5 mr-1.5" /> Manage Guests
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 rounded-md bg-muted/50">
+              <p className="text-2xl font-semibold">{guests.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Total</p>
+            </div>
+            <div className="text-center p-3 rounded-md bg-chart-2/5">
+              <p className="text-2xl font-semibold text-chart-2">{checkedInCount}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Checked In</p>
+            </div>
+            <div className="text-center p-3 rounded-md bg-chart-3/5">
+              <p className="text-2xl font-semibold text-chart-3">{guests.length - checkedInCount}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Pending</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete dialog */}
+      <Dialog open={showDelete} onOpenChange={setShowDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete &quot;{event.name}&quot;?</DialogTitle>
+            <DialogDescription>This will permanently delete the event and all associated guest data.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

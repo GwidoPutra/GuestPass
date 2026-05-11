@@ -7,10 +7,17 @@ import { getGuests, deleteGuest, checkInGuest } from "@/lib/guest-service";
 import { getEvent } from "@/lib/event-service";
 import { Guest, Event } from "@/lib/types";
 import { useToast } from "@/lib/toast-context";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Plus, Users, UserCheck, Clock, QrCode, Trash2 } from "lucide-react";
 
 export default function GuestsPage() {
   const params = useParams();
   const eventId = params.id as string;
+  const { showToast } = useToast();
 
   const [guests, setGuests] = useState<Guest[]>([]);
   const [event, setEvent] = useState<Event | null>(null);
@@ -19,19 +26,15 @@ export default function GuestsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
-  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventData, guestsData] = await Promise.all([
-          getEvent(eventId),
-          getGuests(eventId),
-        ]);
+        const [eventData, guestsData] = await Promise.all([getEvent(eventId), getGuests(eventId)]);
         setEvent(eventData);
         setGuests(guestsData);
       } catch {
-        setError("Gagal memuat data tamu.");
+        setError("Failed to load guests.");
       } finally {
         setIsLoading(false);
       }
@@ -46,9 +49,9 @@ export default function GuestsPage() {
       await deleteGuest(deleteId);
       setGuests(guests.filter((g) => g.id !== deleteId));
       setDeleteId(null);
-      showToast("Tamu berhasil dihapus.", "success");
+      showToast("Guest removed.", "success");
     } catch {
-      setError("Gagal menghapus tamu.");
+      setError("Failed to delete guest.");
     } finally {
       setIsDeleting(false);
     }
@@ -59,13 +62,13 @@ export default function GuestsPage() {
     try {
       const updated = await checkInGuest(guestId);
       setGuests(guests.map((g) => (g.id === guestId ? updated : g)));
-      showToast("Tamu berhasil di-check-in!", "success");
+      showToast("Guest checked in.", "success");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        showToast(axiosErr.response?.data || "Gagal check-in tamu.", "error");
+        showToast(axiosErr.response?.data || "Check-in failed.", "error");
       } else {
-        showToast("Gagal check-in tamu.", "error");
+        showToast("Check-in failed.", "error");
       }
     } finally {
       setCheckingIn(null);
@@ -76,174 +79,150 @@ export default function GuestsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-6 w-32 bg-foreground/5 rounded animate-pulse" />
-        <div className="h-64 bg-foreground/5 rounded animate-pulse" />
+      <div className="space-y-4 max-w-4xl">
+        <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-64 bg-muted rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Link
-        href={`/dashboard/events/${eventId}`}
-        className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-      >
-        &larr; Kembali ke {event?.name || "Event"}
+    <div className="space-y-6 max-w-4xl">
+      <Link href={`/dashboard/events/${eventId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to {event?.name || "event"}
       </Link>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Daftar Tamu</h2>
-          <p className="mt-1 text-sm text-foreground/60">
-            {event?.name} &mdash; {checkedInCount}/{guests.length} sudah check-in
-          </p>
+          <h1 className="text-2xl font-semibold">Guests</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{event?.name}</p>
         </div>
-        <Link
-          href={`/dashboard/events/${eventId}/guests/create`}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-        >
-          + Tambah Tamu
+        <Link href={`/dashboard/events/${eventId}/guests/create`} className={buttonVariants()}>
+            <Plus className="w-4 h-4 mr-1.5" /> Add Guest
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-md border border-foreground/10 p-4">
-          <p className="text-xs font-medium text-foreground/60">Total Tamu</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{guests.length}</p>
-        </div>
-        <div className="rounded-md border border-green-200 bg-green-50 p-4">
-          <p className="text-xs font-medium text-green-700">Sudah Check-in</p>
-          <p className="mt-1 text-2xl font-bold text-green-700">{checkedInCount}</p>
-        </div>
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-          <p className="text-xs font-medium text-amber-700">Belum Check-in</p>
-          <p className="mt-1 text-2xl font-bold text-amber-700">{guests.length - checkedInCount}</p>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
+              <Users className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{guests.length}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-chart-2/10 flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-chart-2" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{checkedInCount}</p>
+              <p className="text-xs text-muted-foreground">Checked In</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-chart-3/10 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-chart-3" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{guests.length - checkedInCount}</p>
+              <p className="text-xs text-muted-foreground">Pending</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
 
       {/* Table */}
       {guests.length === 0 ? (
-        <div className="rounded-lg border border-foreground/10 p-12 text-center">
-          <p className="text-foreground/60">Belum ada tamu untuk event ini.</p>
-          <Link
-            href={`/dashboard/events/${eventId}/guests/create`}
-            className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            Tambah Tamu Pertama
-          </Link>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Users className="w-10 h-10 text-muted-foreground/50" />
+            <p className="mt-3 text-sm text-muted-foreground">No guests yet</p>
+            <Link href={`/dashboard/events/${eventId}/guests/create`} className={buttonVariants({ size: "sm", className: "mt-4" })}>
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> Add first guest
+            </Link>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-foreground/10">
-          <table className="min-w-full divide-y divide-foreground/10">
-            <thead className="bg-foreground/5">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Nama
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-foreground/10">
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {guests.map((guest) => (
-                <tr key={guest.id} className="hover:bg-foreground/[0.02]">
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">
-                    <Link
-                      href={`/dashboard/events/${eventId}/guests/${guest.id}`}
-                      className="hover:text-blue-600 transition-colors"
-                    >
+                <TableRow key={guest.id}>
+                  <TableCell className="font-medium">
+                    <Link href={`/dashboard/events/${eventId}/guests/${guest.id}`} className="hover:text-primary transition-colors">
                       {guest.name}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground/70">
-                    {guest.email}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{guest.email}</TableCell>
+                  <TableCell>
                     {guest.isCheckedIn ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                        Checked In
-                      </span>
+                      <Badge variant="secondary" className="bg-chart-2/10 text-chart-2 border-0">Checked In</Badge>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                        Belum
-                      </span>
+                      <Badge variant="secondary">Pending</Badge>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm space-x-2">
-                    <Link
-                      href={`/dashboard/events/${eventId}/guests/${guest.id}`}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      QR
-                    </Link>
-                    {!guest.isCheckedIn && (
-                      <button
-                        onClick={() => handleCheckIn(guest.id)}
-                        disabled={checkingIn === guest.id}
-                        className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
-                      >
-                        {checkingIn === guest.id ? "..." : "Check-in"}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setDeleteId(guest.id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Hapus
-                    </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link href={`/dashboard/events/${eventId}/guests/${guest.id}`} className={buttonVariants({ variant: "ghost", size: "icon", className: "h-7 w-7" })}>
+                          <QrCode className="w-3.5 h-3.5" />
+                      </Link>
+                      {!guest.isCheckedIn && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          disabled={checkingIn === guest.id}
+                          onClick={() => handleCheckIn(guest.id)}
+                        >
+                          {checkingIn === guest.id ? "..." : "Check in"}
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(guest.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
-      {/* Delete Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg border border-foreground/10">
-            <h3 className="text-lg font-semibold text-foreground">Konfirmasi Hapus</h3>
-            <p className="mt-2 text-sm text-foreground/60">
-              Apakah Anda yakin ingin menghapus tamu ini?
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteId(null)}
-                disabled={isDeleting}
-                className="rounded-md border border-foreground/20 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {isDeleting ? "Menghapus..." : "Hapus"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete dialog */}
+      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove guest</DialogTitle>
+            <DialogDescription>Are you sure you want to remove this guest?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Removing..." : "Remove"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

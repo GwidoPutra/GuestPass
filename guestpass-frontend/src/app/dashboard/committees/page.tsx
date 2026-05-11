@@ -5,6 +5,12 @@ import Link from "next/link";
 import { getProfiles, toggleApproval, deleteProfile } from "@/lib/profile-service";
 import { Profile } from "@/lib/types";
 import { useToast } from "@/lib/toast-context";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Users, UserCheck, Clock, Trash2 } from "lucide-react";
 
 export default function CommitteesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -21,7 +27,7 @@ export default function CommitteesPage() {
         const data = await getProfiles();
         setProfiles(data);
       } catch {
-        setError("Gagal memuat data panitia.");
+        setError("Failed to load committees.");
       } finally {
         setIsLoading(false);
       }
@@ -34,9 +40,9 @@ export default function CommitteesPage() {
     try {
       const updated = await toggleApproval(id);
       setProfiles(profiles.map((p) => (p.id === id ? updated : p)));
-      showToast(updated.isApproved ? "Akun berhasil di-approve." : "Approval berhasil di-revoke.", "success");
+      showToast(updated.isApproved ? "Account approved." : "Approval revoked.", "success");
     } catch {
-      showToast("Gagal mengubah status approval.", "error");
+      showToast("Failed to update approval.", "error");
     } finally {
       setTogglingId(null);
     }
@@ -49,187 +55,154 @@ export default function CommitteesPage() {
       await deleteProfile(deleteId);
       setProfiles(profiles.filter((p) => p.id !== deleteId));
       setDeleteId(null);
-      showToast("Akun berhasil dihapus.", "success");
+      showToast("Account deleted.", "success");
     } catch {
-      setError("Gagal menghapus akun.");
+      setError("Failed to delete account.");
     } finally {
       setIsDeleting(false);
     }
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return new Date(dateStr).toLocaleDateString("id-ID", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const approvedCount = profiles.filter((p) => p.isApproved).length;
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 w-48 bg-foreground/5 rounded animate-pulse" />
-        <div className="h-64 bg-foreground/5 rounded animate-pulse" />
+      <div className="space-y-4 max-w-4xl">
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+        <div className="h-64 bg-muted rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Manajemen Panitia</h2>
-        <p className="mt-1 text-sm text-foreground/60">
-          {approvedCount}/{profiles.length} akun sudah disetujui
-        </p>
+        <h1 className="text-2xl font-semibold">Committees</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage committee accounts and approvals</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-md border border-foreground/10 p-4">
-          <p className="text-xs font-medium text-foreground/60">Total Akun</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{profiles.length}</p>
-        </div>
-        <div className="rounded-md border border-green-200 bg-green-50 p-4">
-          <p className="text-xs font-medium text-green-700">Approved</p>
-          <p className="mt-1 text-2xl font-bold text-green-700">{approvedCount}</p>
-        </div>
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-          <p className="text-xs font-medium text-amber-700">Pending</p>
-          <p className="mt-1 text-2xl font-bold text-amber-700">{profiles.length - approvedCount}</p>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
+              <Users className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{profiles.length}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-chart-2/10 flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-chart-2" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{approvedCount}</p>
+              <p className="text-xs text-muted-foreground">Approved</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-md bg-chart-3/10 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-chart-3" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">{profiles.length - approvedCount}</p>
+              <p className="text-xs text-muted-foreground">Pending</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
 
       {/* Table */}
       {profiles.length === 0 ? (
-        <div className="rounded-lg border border-foreground/10 p-12 text-center">
-          <p className="text-foreground/60">Belum ada akun panitia terdaftar.</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Users className="w-10 h-10 text-muted-foreground/50" />
+            <p className="mt-3 text-sm text-muted-foreground">No committee accounts registered yet.</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-foreground/10">
-          <table className="min-w-full divide-y divide-foreground/10">
-            <thead className="bg-foreground/5">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Nama
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Terdaftar
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-foreground/60 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-foreground/10">
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Member</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {profiles.map((profile) => (
-                <tr key={profile.id} className="hover:bg-foreground/[0.02]">
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">
-                    <Link
-                      href={`/dashboard/committees/${profile.id}`}
-                      className="hover:text-blue-600 transition-colors"
-                    >
-                      {profile.fullName}
+                <TableRow key={profile.id}>
+                  <TableCell>
+                    <Link href={`/dashboard/committees/${profile.id}`} className="hover:text-primary transition-colors">
+                      <p className="font-medium text-sm">{profile.fullName}</p>
+                      <p className="text-xs text-muted-foreground">{profile.email}</p>
                     </Link>
-                    <p className="text-xs text-foreground/50">@{profile.username}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground/70">
-                    {profile.email}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 capitalize">
-                      {profile.role || "panitia"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize text-xs">{profile.role || "panitia"}</Badge>
+                  </TableCell>
+                  <TableCell>
                     {profile.isApproved ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                        Approved
-                      </span>
+                      <Badge variant="secondary" className="bg-chart-2/10 text-chart-2 border-0">Approved</Badge>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-                        Pending
-                      </span>
+                      <Badge variant="secondary">Pending</Badge>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground/70">
-                    {formatDate(profile.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm space-x-2">
-                    <button
-                      onClick={() => handleToggleApproval(profile.id)}
-                      disabled={togglingId === profile.id}
-                      className={`font-medium disabled:opacity-50 ${
-                        profile.isApproved
-                          ? "text-amber-600 hover:text-amber-800"
-                          : "text-green-600 hover:text-green-800"
-                      }`}
-                    >
-                      {togglingId === profile.id
-                        ? "..."
-                        : profile.isApproved
-                        ? "Revoke"
-                        : "Approve"}
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(profile.id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Hapus
-                    </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(profile.createdAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={togglingId === profile.id}
+                        onClick={() => handleToggleApproval(profile.id)}
+                      >
+                        {togglingId === profile.id ? "..." : profile.isApproved ? "Revoke" : "Approve"}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(profile.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
-      {/* Delete Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg border border-foreground/10">
-            <h3 className="text-lg font-semibold text-foreground">Konfirmasi Hapus</h3>
-            <p className="mt-2 text-sm text-foreground/60">
-              Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteId(null)}
-                disabled={isDeleting}
-                className="rounded-md border border-foreground/20 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {isDeleting ? "Menghapus..." : "Hapus"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete dialog */}
+      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete account</DialogTitle>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

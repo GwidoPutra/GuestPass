@@ -4,6 +4,10 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/auth-service";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,16 +44,14 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await register({ username, email, password, fullName });
-      setSuccess("Registrasi berhasil! Akun Anda menunggu persetujuan admin. Silakan login setelah disetujui.");
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
+      setSuccess("Pendaftaran berhasil! Harap tunggu, akun anda akan dikonfirmasi oleh admin.");
+      setTimeout(() => router.push("/login"), 3000);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const axiosErr = err as { response?: { data?: string; status?: number } };
-        setError(axiosErr.response?.data || "Registrasi gagal. Coba lagi.");
+        const axiosErr = err as { response?: { data?: string } };
+        setError(axiosErr.response?.data || "Registration failed.");
       } else {
-        setError("Terjadi kesalahan jaringan. Coba lagi nanti.");
+        setError("Network error. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -57,128 +59,126 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            GuestPass
-          </h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            Buat akun baru
+    <div className="min-h-screen flex">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-[480px] bg-primary p-12 flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
+              <span className="text-sm font-bold text-white">G</span>
+            </div>
+            <span className="text-lg font-semibold text-white">GuestPass</span>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-3xl font-bold text-white leading-tight">
+            Start managing<br />your events today.
+          </h2>
+          <p className="mt-4 text-sm text-white/70 leading-relaxed">
+              Buat akun untuk mulai mengelola event Anda dengan efisien. Streamline guest check-in, track attendance in real-time, and deliver seamless event experiences.
           </p>
         </div>
+        <p className="text-xs text-white/50">
+          &copy; 2026 GuestPass. All rights reserved.
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-              {error}
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <Card className="w-full max-w-sm border-0 shadow-none">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="lg:hidden flex items-center gap-2 mb-6">
+              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <span className="text-xs font-bold text-primary-foreground">G</span>
+              </div>
+              <span className="text-sm font-semibold">GuestPass</span>
             </div>
-          )}
+            <CardTitle className="text-xl">Buat Akun</CardTitle>
+            <CardDescription>Masukkan data diri anda untuk mendaftar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="rounded-md bg-chart-2/10 px-3 py-2.5 text-sm text-chart-2">
+                  {success}
+                </div>
+              )}
 
-          {success && (
-            <div className="rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-200">
-              {success}
-            </div>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-foreground">
-                Nama Lengkap
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Nama lengkap Anda"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="johndoe"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-foreground">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Username"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="nama@email.com"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Min. 6 chars"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Konfirmasi Ulang</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Repeat"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Minimal 6 karakter"
-              />
-            </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating account..." : "Buat Akun"}
+              </Button>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
-                Konfirmasi Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Ulangi password"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Memproses..." : "Daftar"}
-          </button>
-
-          <p className="text-center text-sm text-foreground/60">
-            Sudah punya akun?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Masuk di sini
-            </Link>
-          </p>
-        </form>
+              <p className="text-center text-sm text-muted-foreground">
+                Sudah punya akun?{" "}
+                <Link href="/login" className="font-medium text-primary hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

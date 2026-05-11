@@ -24,7 +24,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = "info") => {
     const id = ++toastId;
     setToasts((prev) => [...prev, { id, message, type }]);
-
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
@@ -34,33 +33,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const getToastStyles = (type: ToastType) => {
+  const getStyles = (type: ToastType) => {
     switch (type) {
       case "success":
-        return "bg-green-600 text-white";
+        return "bg-foreground text-background";
       case "error":
-        return "bg-red-600 text-white";
+        return "bg-destructive text-white";
       case "info":
-        return "bg-gray-800 text-white";
+        return "bg-foreground text-background";
     }
   };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-
-      {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
+      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-xs">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`rounded-md px-4 py-3 text-sm font-medium shadow-lg flex items-center justify-between gap-3 animate-[slideIn_0.2s_ease-out] ${getToastStyles(toast.type)}`}
+            className={`rounded-md px-4 py-2.5 text-sm shadow-lg flex items-center justify-between gap-3 animate-[slideIn_0.2s_ease-out] ${getStyles(toast.type)}`}
           >
             <span>{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              className="opacity-70 hover:opacity-100 transition-opacity text-lg leading-none"
-              aria-label="Tutup notifikasi"
+              className="opacity-60 hover:opacity-100 transition-opacity"
+              aria-label="Close"
             >
               &times;
             </button>

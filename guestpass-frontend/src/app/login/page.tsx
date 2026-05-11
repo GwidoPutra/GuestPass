@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { login } from "@/lib/auth-service";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,75 +46,88 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            GuestPass
-          </h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            Masuk ke akun Anda
+    <div className="min-h-screen flex">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-[480px] bg-primary p-12 flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
+              <span className="text-sm font-bold text-white">G</span>
+            </div>
+            <span className="text-lg font-semibold text-white">GuestPass</span>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-3xl font-bold text-white leading-tight">
+            Kelola event anda<br />dengan efisien.
+          </h2>
+          <p className="mt-4 text-sm text-white/70 leading-relaxed">
+            Streamline guest check-in, track attendance in real-time, and deliver seamless event experiences.
           </p>
         </div>
+        <p className="text-xs text-white/50">
+          &copy; 2026 GuestPass. All rights reserved.
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-              {error}
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <Card className="w-full max-w-sm border-0 shadow-none">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="lg:hidden flex items-center gap-2 mb-6">
+              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <span className="text-xs font-bold text-primary-foreground">G</span>
+              </div>
+              <span className="text-sm font-semibold">GuestPass</span>
             </div>
-          )}
+            <CardTitle className="text-xl">Selamat Datang</CardTitle>
+            <CardDescription>Masukkan kredensial Anda untuk mengakses akun Anda</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="nama@email.com"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Masukkan password"
-              />
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Memproses..." : "Masuk"}
-          </button>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
+              </Button>
 
-          <p className="text-center text-sm text-foreground/60">
-            Belum punya akun?{" "}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Daftar di sini
-            </Link>
-          </p>
-        </form>
+              <p className="text-center text-sm text-muted-foreground">
+                Belum punya akun?{" "}
+                <Link href="/register" className="font-medium text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -5,10 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProfile, toggleApproval, deleteProfile } from "@/lib/profile-service";
 import { Profile } from "@/lib/types";
+import { useToast } from "@/lib/toast-context";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Mail, User, Shield, CalendarDays, Trash2 } from "lucide-react";
 
 export default function CommitteeDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const id = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -24,7 +31,7 @@ export default function CommitteeDetailPage() {
         const data = await getProfile(id);
         setProfile(data);
       } catch {
-        setError("Profil tidak ditemukan.");
+        setError("Profile not found.");
       } finally {
         setIsLoading(false);
       }
@@ -37,8 +44,9 @@ export default function CommitteeDetailPage() {
     try {
       const updated = await toggleApproval(id);
       setProfile(updated);
+      showToast(updated.isApproved ? "Account approved." : "Approval revoked.", "success");
     } catch {
-      setError("Gagal mengubah status approval.");
+      showToast("Failed to update approval.", "error");
     } finally {
       setIsToggling(false);
     }
@@ -48,19 +56,19 @@ export default function CommitteeDetailPage() {
     setIsDeleting(true);
     try {
       await deleteProfile(id);
+      showToast("Account deleted.", "success");
       router.push("/dashboard/committees");
     } catch {
-      setError("Gagal menghapus akun.");
+      setError("Failed to delete account.");
       setIsDeleting(false);
     }
   };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
       day: "numeric",
+      month: "long",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -68,134 +76,117 @@ export default function CommitteeDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-6 w-32 bg-foreground/5 rounded animate-pulse" />
-        <div className="h-48 bg-foreground/5 rounded animate-pulse" />
+      <div className="space-y-4 max-w-lg">
+        <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-48 bg-muted rounded-lg animate-pulse" />
       </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="space-y-4">
-        <Link
-          href="/dashboard/committees"
-          className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-        >
-          &larr; Kembali ke Daftar Panitia
+      <div className="max-w-lg space-y-4">
+        <Link href="/dashboard/committees" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to committees
         </Link>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-          {error || "Profil tidak ditemukan."}
-        </div>
+        <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Link
-        href="/dashboard/committees"
-        className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-      >
-        &larr; Kembali ke Daftar Panitia
+    <div className="space-y-6 max-w-lg">
+      <Link href="/dashboard/committees" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to committees
       </Link>
 
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">{profile.fullName}</h2>
-          <p className="mt-1 text-sm text-foreground/60">@{profile.username}</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
+            {profile.fullName.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold">{profile.fullName}</h1>
+            <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          </div>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={handleToggleApproval}
+          <Button
+            variant="outline"
+            size="sm"
             disabled={isToggling}
-            className={`rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${
-              profile.isApproved
-                ? "bg-amber-500 hover:bg-amber-600"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
+            onClick={handleToggleApproval}
           >
-            {isToggling
-              ? "Memproses..."
-              : profile.isApproved
-              ? "Revoke Approval"
-              : "Approve"}
-          </button>
-          <button
+            {isToggling ? "..." : profile.isApproved ? "Revoke" : "Approve"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             onClick={() => setShowDelete(true)}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
           >
-            Hapus
-          </button>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
         </div>
       </div>
 
-      {/* Detail Card */}
-      <div className="rounded-lg border border-foreground/10 p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">Informasi Akun</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Email</p>
-            <p className="mt-1 text-sm text-foreground">{profile.email}</p>
+      {/* Details */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">Account Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5" /> Email
+            </span>
+            <span className="text-sm">{profile.email}</span>
           </div>
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Role</p>
-            <p className="mt-1">
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 capitalize">
-                {profile.role || "panitia"}
-              </span>
-            </p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" /> Username
+            </span>
+            <span className="text-sm">@{profile.username}</span>
           </div>
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Status</p>
-            <div className="mt-1">
-              {profile.isApproved ? (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                  Approved
-                </span>
-              ) : (
-                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-                  Pending Approval
-                </span>
-              )}
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> Role
+            </span>
+            <Badge variant="outline" className="capitalize text-xs">{profile.role || "panitia"}</Badge>
           </div>
-          <div>
-            <p className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Terdaftar Pada</p>
-            <p className="mt-1 text-sm text-foreground">{formatDate(profile.createdAt)}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Status</span>
+            {profile.isApproved ? (
+              <Badge variant="secondary" className="bg-chart-2/10 text-chart-2 border-0">Approved</Badge>
+            ) : (
+              <Badge variant="secondary">Pending</Badge>
+            )}
           </div>
-        </div>
-      </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" /> Registered
+            </span>
+            <span className="text-sm">{formatDate(profile.createdAt)}</span>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Delete Modal */}
-      {showDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg border border-foreground/10">
-            <h3 className="text-lg font-semibold text-foreground">Konfirmasi Hapus</h3>
-            <p className="mt-2 text-sm text-foreground/60">
-              Apakah Anda yakin ingin menghapus akun &quot;{profile.fullName}&quot;? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDelete(false)}
-                disabled={isDeleting}
-                className="rounded-md border border-foreground/20 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {isDeleting ? "Menghapus..." : "Hapus"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete dialog */}
+      <Dialog open={showDelete} onOpenChange={setShowDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete &quot;{profile.fullName}&quot;?</DialogTitle>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

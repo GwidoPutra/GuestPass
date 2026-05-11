@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEvent } from "@/lib/event-service";
 import { useToast } from "@/lib/toast-context";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -21,21 +26,21 @@ export default function CreateEventPage() {
     setError("");
 
     if (!name || !location || !date) {
-      setError("Semua field harus diisi.");
+      setError("All fields are required.");
       return;
     }
 
     setIsLoading(true);
     try {
       await createEvent({ name, location, date: new Date(date).toISOString() });
-      showToast("Event berhasil dibuat!", "success");
+      showToast("Event created successfully.", "success");
       router.push("/dashboard/events");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Gagal membuat event.");
+        setError(axiosErr.response?.data || "Failed to create event.");
       } else {
-        setError("Terjadi kesalahan jaringan.");
+        setError("Network error.");
       }
     } finally {
       setIsLoading(false);
@@ -43,84 +48,66 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-lg space-y-6">
       <div>
         <Link
           href="/dashboard/events"
-          className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          &larr; Kembali ke Events
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to events
         </Link>
-        <h2 className="mt-2 text-2xl font-bold text-foreground">Buat Event Baru</h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-            {error}
-          </div>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Create Event</CardTitle>
+          <CardDescription>Add a new event to start managing guests.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
+            )}
 
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-foreground">
-            Nama Event
-          </label>
-          <input
-            id="name"
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Contoh: Seminar Teknologi 2026"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Event Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g. Tech Conference 2026"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-        <div>
-          <label htmlFor="location" className="block text-sm font-medium text-foreground">
-            Lokasi
-          </label>
-          <input
-            id="location"
-            type="text"
-            required
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Contoh: Gedung Serbaguna, Jakarta"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g. Convention Center, Jakarta"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
 
-        <div>
-          <label htmlFor="date" className="block text-sm font-medium text-foreground">
-            Tanggal
-          </label>
-          <input
-            id="date"
-            type="datetime-local"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-foreground/20 bg-background px-3 py-2 text-foreground placeholder-foreground/40 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date & Time</Label>
+              <Input
+                id="date"
+                type="datetime-local"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Menyimpan..." : "Simpan Event"}
-          </button>
-          <Link
-            href="/dashboard/events"
-            className="rounded-md border border-foreground/20 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-foreground/5 transition-colors"
-          >
-            Batal
-          </Link>
-        </div>
-      </form>
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Event"}
+              </Button>
+              <Link href="/dashboard/events" className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
