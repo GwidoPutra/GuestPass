@@ -1,49 +1,83 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GuestPass.Api.Data;
-using GuestPass.Api.Models;
-using GuestPass.Api.DTOs;
+using GuestPass.Data;
+using GuestPass.Models;
+using GuestPass.DTOs;
+using BCrypt.Net;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
-namespace GuestPass.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+namespace GuestPass.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public AuthController(AppDbContext context)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _config;
 
-    // POST: api/Auth/register
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(Profile profile)
-    {
-        if (await _context.Profiles.AnyAsync(u => u.Email == profile.Email))
-            return BadRequest("Email sudah terdaftar.");
+        public AuthController(AppDbContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
 
-        profile.Id = Guid.NewGuid();
-        profile.CreatedAt = DateTime.UtcNow;
-        
-        _context.Profiles.Add(profile);
-        await _context.SaveChangesAsync();
+        [HttpPost("register")]
+        public IActionResult Register(RegisterRequest request)
+        {
+            // Cek apakah email sudah ada
+            if (_context.profiles.Any(u => u.email == request.Email))
+                return BadRequest("Email sudah terdaftar.");
 
-        return Ok(new { message = "Registrasi berhasil!", data = profile });
-    }
+            var newProfile = new Profile
+            {
+                username = request.Username,
+                email = request.Email,
+                fullname = request.Fullname,
+                passwordhash = BCrypt.Net.BCrypt.HashPassword(request.Password), // Hash password!
+                role = "Panitia"
+            };
 
-    // POST: api/Auth/login (Simulasi sederhana)
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        var user = await _context.Profiles
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.PasswordHash == request.Password);
+            _context.profiles.Add(newProfile);
+            _context.SaveChanges();
 
-        if (user == null) return Unauthorized("Email atau Password salah.");
+            return Ok("Registrasi berhasil.");
+        }
 
-        return Ok(new { message = "Login berhasil!", user });
+        [HttpPost("login")]
+        public IActionResult Login(LoginRequest request)
+        {
+            var user = _context.profiles.FirstOrDefault(u => u.email == request.Email);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.passwordhash))
+                return Unauthorized("Email atau password salah.");
+
+            var token = GenerateJwtToken(user);
+            return Ok(new { token = token, role = user.role });
+        }
+
+        private string GenerateJwtToken(Profile user)
+        {
+            var jwtSettings = _config.GetSection("Jwt");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
+            
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.id.ToString()),
+                new Claim(ClaimTypes.Email, user.email),
+                new Claim(ClaimTypes.Role, user.role)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }
-
-public record LoginRequest(string Email, string Password);
