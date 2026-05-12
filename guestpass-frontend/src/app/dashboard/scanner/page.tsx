@@ -16,12 +16,15 @@ export default function ScannerPage() {
   } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrCodeRef = useRef<any>(null);
 
   const startScanner = async () => {
     setScanResult(null);
     setIsScanning(true);
+    isProcessingRef.current = false;
+    setIsProcessing(false);
 
     const { Html5Qrcode } = await import("html5-qrcode");
 
@@ -38,11 +41,17 @@ export default function ScannerPage() {
       await scanner.start(
         { facingMode: "environment" },
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
+          fps: 15,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const size = Math.floor(minEdge * 0.7);
+            return { width: size, height: size };
+          },
+          aspectRatio: 1.0,
         },
         async (decodedText: string) => {
-          if (isProcessing) return;
+          if (isProcessingRef.current) return;
+          isProcessingRef.current = true;
           setIsProcessing(true);
 
           try {
@@ -99,6 +108,7 @@ export default function ScannerPage() {
         });
       }
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
