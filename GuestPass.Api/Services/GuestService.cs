@@ -82,7 +82,7 @@ public class GuestService : IGuestService
         // Kirim email QR code ke tamu
         try
         {
-            await _emailService.SendQRCodeEmailAsync(guest.Email, guest.Name, eventEntity.Name, guest.QRCodeToken);
+            await _emailService.SendQRCodeEmailAsync(guest.Email, guest.Name, eventEntity.Name, guest.QRCodeToken, eventEntity.Date, eventEntity.Location);
         }
         catch (Exception ex)
         {

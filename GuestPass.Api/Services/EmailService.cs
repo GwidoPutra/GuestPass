@@ -16,7 +16,7 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken)
+    public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken, DateTimeOffset eventDate, string eventLocation)
     {
         var emailSettings = _configuration.GetSection("Email");
         var smtpHost = emailSettings["SmtpHost"] ?? "smtp.gmail.com";
@@ -31,6 +31,10 @@ public class EmailService : IEmailService
         using var qrCode = new PngByteQRCode(qrCodeData);
         var qrCodeBytes = qrCode.GetGraphic(10);
 
+        // Format event date and time
+        var formattedDate = eventDate.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"));
+        var formattedTime = eventDate.ToString("HH:mm") + " WIB";
+
         // Build email
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(senderName, senderEmail));
@@ -42,6 +46,25 @@ public class EmailService : IEmailService
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
                 <h2 style='color: #333;'>Halo, {guestName}!</h2>
                 <p>Anda telah terdaftar sebagai tamu di event <strong>{eventName}</strong>.</p>
+                
+                <div style='background-color: #f8f9fa; border-left: 4px solid #4a90d9; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                    <h3 style='margin: 0 0 10px 0; color: #333;'>Detail Acara</h3>
+                    <table style='width: 100%; font-size: 14px; color: #555;'>
+                        <tr>
+                            <td style='padding: 5px 0; width: 80px;'><strong>Tanggal</strong></td>
+                            <td style='padding: 5px 0;'>: {formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 5px 0;'><strong>Waktu</strong></td>
+                            <td style='padding: 5px 0;'>: {formattedTime}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 5px 0;'><strong>Tempat</strong></td>
+                            <td style='padding: 5px 0;'>: {eventLocation}</td>
+                        </tr>
+                    </table>
+                </div>
+
                 <p>Berikut adalah QR Code untuk check-in Anda pada hari acara:</p>
                 <div style='text-align: center; margin: 20px 0;'>
                     <img src='cid:qrcode' alt='QR Code' style='width: 250px; height: 250px;' />
