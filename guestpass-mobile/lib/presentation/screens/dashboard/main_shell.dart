@@ -6,6 +6,7 @@ import 'package:guestpass_mobile/logic/auth/auth_cubit.dart';
 import 'package:guestpass_mobile/logic/auth/auth_state.dart';
 import 'package:guestpass_mobile/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:guestpass_mobile/presentation/screens/events/event_list_screen.dart';
+import 'package:guestpass_mobile/presentation/screens/scanner/scanner_screen.dart';
 
 /// Shell utama dengan Bottom Navigation Bar (4 tab)
 class MainShell extends StatefulWidget {
@@ -21,7 +22,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const EventListScreen(),
-    const _PlaceholderScreen(title: 'QR Scanner', icon: Icons.qr_code_scanner),
+    const ScannerScreen(),
     const _PlaceholderScreen(title: 'Panitia', icon: Icons.people),
   ];
 
