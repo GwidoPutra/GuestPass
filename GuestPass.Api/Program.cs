@@ -130,6 +130,15 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Drop old migration history if it contains outdated entries
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw(
+                "DROP TABLE IF EXISTS \"__EFMigrationsHistory\" CASCADE;");
+        }
+        catch { /* table might not exist */ }
+
         dbContext.Database.Migrate();
     }
 
