@@ -79,15 +79,18 @@ public class GuestService : IGuestService
 
         _logger.LogInformation("Tamu {GuestId} berhasil ditambahkan ke event {EventId}", guest.Id, request.EventId);
 
-        // Kirim email QR code ke tamu
-        try
+        // Kirim email QR code ke tamu (fire-and-forget, tidak blocking response)
+        _ = Task.Run(async () =>
         {
-            await _emailService.SendQRCodeEmailAsync(guest.Email, guest.Name, eventEntity.Name, guest.QRCodeToken, eventEntity.Date, eventEntity.Location);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Gagal mengirim email QR code ke {Email}, tamu tetap tersimpan", guest.Email);
-        }
+            try
+            {
+                await _emailService.SendQRCodeEmailAsync(guest.Email, guest.Name, eventEntity.Name, guest.QRCodeToken, eventEntity.Date, eventEntity.Location);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Gagal mengirim email QR code ke {Email}, tamu tetap tersimpan", guest.Email);
+            }
+        });
 
         return new GuestResponse
         {
