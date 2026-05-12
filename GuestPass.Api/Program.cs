@@ -34,6 +34,7 @@ try
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddHttpClient();
 
     // Swagger dengan JWT Bearer support
     builder.Services.AddSwaggerGen(options =>

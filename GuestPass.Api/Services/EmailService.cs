@@ -1,6 +1,6 @@
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using QRCoder;
 
 namespace GuestPass.Api.Services;
@@ -9,40 +9,41 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, IHttpClientFactory httpClientFactory)
     {
         _configuration = configuration;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken, DateTimeOffset eventDate, string eventLocation)
     {
         var emailSettings = _configuration.GetSection("Email");
-        var smtpHost = emailSettings["SmtpHost"] ?? "smtp.gmail.com";
-        var smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "465");
-        var senderEmail = emailSettings["SenderEmail"] ?? "";
+        var apiKey = emailSettings["ResendApiKey"] ?? "";
+        var senderEmail = emailSettings["SenderEmail"] ?? "onboarding@resend.dev";
         var senderName = emailSettings["SenderName"] ?? "GuestPass";
-        var password = emailSettings["password"] ?? emailSettings["Password"] ?? "";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend API key belum dikonfigurasi, email tidak dikirim");
+            return;
+        }
 
         // Generate QR code image
         using var qrGenerator = new QRCodeGenerator();
         using var qrCodeData = qrGenerator.CreateQrCode(qrCodeToken, QRCodeGenerator.ECCLevel.Q);
         using var qrCode = new PngByteQRCode(qrCodeData);
         var qrCodeBytes = qrCode.GetGraphic(10);
+        var qrCodeBase64 = Convert.ToBase64String(qrCodeBytes);
 
         // Format event date and time
         var formattedDate = eventDate.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"));
         var formattedTime = eventDate.ToString("HH:mm") + " WIB";
 
-        // Build email
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(senderName, senderEmail));
-        message.To.Add(new MailboxAddress(guestName, toEmail));
-        message.Subject = $"Undangan Event: {eventName} - QR Code Check-in Anda";
-
-        var builder = new BodyBuilder();
-        builder.HtmlBody = $@"
+        // Build HTML body
+        var htmlBody = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
                 <h2 style='color: #333;'>Halo, {guestName}!</h2>
                 <p>Anda telah terdaftar sebagai tamu di event <strong>{eventName}</strong>.</p>
@@ -67,7 +68,7 @@ public class EmailService : IEmailService
 
                 <p>Berikut adalah QR Code untuk check-in Anda pada hari acara:</p>
                 <div style='text-align: center; margin: 20px 0;'>
-                    <img src='cid:qrcode' alt='QR Code' style='width: 250px; height: 250px;' />
+                    <img src='data:image/png;base64,{qrCodeBase64}' alt='QR Code' style='width: 250px; height: 250px;' />
                 </div>
                 <p style='text-align: center; font-size: 14px; color: #666;'>
                     Kode: <strong>{qrCodeToken}</strong>
@@ -79,23 +80,37 @@ public class EmailService : IEmailService
                 </p>
             </div>";
 
-        var qrImage = builder.LinkedResources.Add("qrcode.png", qrCodeBytes, new ContentType("image", "png"));
-        qrImage.ContentId = "qrcode";
+        // Send via Resend API
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
-        message.Body = builder.ToMessageBody();
+        var payload = new
+        {
+            from = $"{senderName} <{senderEmail}>",
+            to = new[] { toEmail },
+            subject = $"Undangan Event: {eventName} - QR Code Check-in Anda",
+            html = htmlBody
+        };
 
-        // Send email
+        var json = JsonSerializer.Serialize(payload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
         try
         {
-            using var client = new SmtpClient();
-            await client.ConnectAsync(smtpHost, smtpPort, smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(senderEmail, password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            var response = await client.PostAsync("https://api.resend.com/emails", content);
+            var responseBody = await response.Content.ReadAsStringAsync();
 
-            _logger.LogInformation("Email QR code berhasil dikirim ke {Email} untuk event {Event}", toEmail, eventName);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Email QR code berhasil dikirim ke {Email} untuk event {Event}", toEmail, eventName);
+            }
+            else
+            {
+                _logger.LogError("Gagal mengirim email ke {Email}. Status: {Status}, Response: {Response}", toEmail, response.StatusCode, responseBody);
+                throw new Exception($"Resend API error: {response.StatusCode} - {responseBody}");
+            }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not Exception { Message: var m } || !m.StartsWith("Resend API error"))
         {
             _logger.LogError(ex, "Gagal mengirim email ke {Email}", toEmail);
             throw;
