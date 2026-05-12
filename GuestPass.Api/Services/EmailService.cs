@@ -1,6 +1,6 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using QRCoder;
 
 namespace GuestPass.Api.Services;
@@ -9,41 +9,40 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, IHttpClientFactory httpClientFactory)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
     }
 
     public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken, DateTimeOffset eventDate, string eventLocation)
     {
         var emailSettings = _configuration.GetSection("Email");
-        var apiKey = emailSettings["BrevoApiKey"] ?? emailSettings["ResendApiKey"] ?? "";
-        var senderEmail = emailSettings["SenderEmail"] ?? "noreply@guestpass.com";
+        var smtpHost = emailSettings["SmtpHost"] ?? "smtp.gmail.com";
+        var smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "587");
+        var senderEmail = emailSettings["SenderEmail"] ?? "";
         var senderName = emailSettings["SenderName"] ?? "GuestPass";
-
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            _logger.LogWarning("Email API key belum dikonfigurasi, email tidak dikirim");
-            return;
-        }
+        var password = emailSettings["Password"] ?? emailSettings["password"] ?? "";
 
         // Generate QR code image
         using var qrGenerator = new QRCodeGenerator();
         using var qrCodeData = qrGenerator.CreateQrCode(qrCodeToken, QRCodeGenerator.ECCLevel.Q);
         using var qrCode = new PngByteQRCode(qrCodeData);
         var qrCodeBytes = qrCode.GetGraphic(10);
-        var qrCodeBase64 = Convert.ToBase64String(qrCodeBytes);
 
         // Format event date and time
         var formattedDate = eventDate.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"));
         var formattedTime = eventDate.ToString("HH:mm") + " WIB";
 
-        // Build HTML body
-        var htmlBody = $@"
+        // Build email
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(senderName, senderEmail));
+        message.To.Add(new MailboxAddress(guestName, toEmail));
+        message.Subject = $"Undangan Event: {eventName} - QR Code Check-in Anda";
+
+        var builder = new BodyBuilder();
+        builder.HtmlBody = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
                 <h2 style='color: #333;'>Halo, {guestName}!</h2>
                 <p>Anda telah terdaftar sebagai tamu di event <strong>{eventName}</strong>.</p>
@@ -68,7 +67,7 @@ public class EmailService : IEmailService
 
                 <p>Berikut adalah QR Code untuk check-in Anda pada hari acara:</p>
                 <div style='text-align: center; margin: 20px 0;'>
-                    <img src='data:image/png;base64,{qrCodeBase64}' alt='QR Code' style='width: 250px; height: 250px;' />
+                    <img src='cid:qrcode' alt='QR Code' style='width: 250px; height: 250px;' />
                 </div>
                 <p style='text-align: center; font-size: 14px; color: #666;'>
                     Kode: <strong>{qrCodeToken}</strong>
@@ -80,38 +79,24 @@ public class EmailService : IEmailService
                 </p>
             </div>";
 
-        // Send via Brevo API
-        var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("api-key", apiKey);
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        var qrImage = builder.LinkedResources.Add("qrcode.png", qrCodeBytes, new ContentType("image", "png"));
+        qrImage.ContentId = "qrcode";
 
-        var payload = new
-        {
-            sender = new { name = senderName, email = senderEmail },
-            to = new[] { new { email = toEmail, name = guestName } },
-            subject = $"Undangan Event: {eventName} - QR Code Check-in Anda",
-            htmlContent = htmlBody
-        };
+        message.Body = builder.ToMessageBody();
 
-        var json = JsonSerializer.Serialize(payload);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
+        // Send email via SMTP
         try
         {
-            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
-            var responseBody = await response.Content.ReadAsStringAsync();
+            using var client = new SmtpClient();
+            var sslOptions = smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            await client.ConnectAsync(smtpHost, smtpPort, sslOptions);
+            await client.AuthenticateAsync(senderEmail, password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
 
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Email QR code berhasil dikirim ke {Email} untuk event {Event}", toEmail, eventName);
-            }
-            else
-            {
-                _logger.LogError("Gagal mengirim email ke {Email}. Status: {Status}, Response: {Response}", toEmail, response.StatusCode, responseBody);
-                throw new Exception($"Brevo API error: {response.StatusCode} - {responseBody}");
-            }
+            _logger.LogInformation("Email QR code berhasil dikirim ke {Email} untuk event {Event}", toEmail, eventName);
         }
-        catch (Exception ex) when (ex is not Exception { Message: var m } || !m.StartsWith("Brevo API error"))
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Gagal mengirim email ke {Email}", toEmail);
             throw;
