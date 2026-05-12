@@ -20,10 +20,10 @@ public class EmailService : IEmailService
     {
         var emailSettings = _configuration.GetSection("Email");
         var smtpHost = emailSettings["SmtpHost"] ?? "smtp.gmail.com";
-        var smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "587");
+        var smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "465");
         var senderEmail = emailSettings["SenderEmail"] ?? "";
         var senderName = emailSettings["SenderName"] ?? "GuestPass";
-        var password = emailSettings["Password"] ?? "";
+        var password = emailSettings["password"] ?? emailSettings["Password"] ?? "";
 
         // Generate QR code image
         using var qrGenerator = new QRCodeGenerator();
@@ -88,7 +88,7 @@ public class EmailService : IEmailService
         try
         {
             using var client = new SmtpClient();
-            await client.ConnectAsync(smtpHost, smtpPort, SecureSocketOptions.StartTls);
+            await client.ConnectAsync(smtpHost, smtpPort, smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(senderEmail, password);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
