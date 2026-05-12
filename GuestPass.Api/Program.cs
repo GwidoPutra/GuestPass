@@ -126,6 +126,13 @@ try
 
     var app = builder.Build();
 
+    // Auto-migrate database
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Database.Migrate();
+    }
+
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
     // Swagger (aktif di semua environment untuk dokumentasi)
