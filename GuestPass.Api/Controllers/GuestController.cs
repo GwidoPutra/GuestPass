@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using GuestPass.Api.Data;
-using GuestPass.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using GuestPass.Api.DTOs;
+using GuestPass.Api.Services;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 
 namespace GuestPass.Api.Controllers;
 
@@ -12,111 +11,66 @@ namespace GuestPass.Api.Controllers;
 [ApiController]
 public class GuestController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IGuestService _guestService;
 
-    public GuestController(AppDbContext context)
+    public GuestController(IGuestService guestService)
     {
-        _context = context;
+        _guestService = guestService;
     }
 
-    // GET: api/Guest?eventId={eventId}
+    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    /// <summary>
+    /// Mengambil daftar tamu berdasarkan event ID.
+    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Guest>>> GetGuests([FromQuery] Guid eventId)
+    public async Task<IActionResult> GetGuests([FromQuery] Guid eventId)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        // Validasi bahwa event milik user yang login
-        var eventEntity = await _context.Events.FindAsync(eventId);
-        if (eventEntity == null) return NotFound("Event tidak ditemukan.");
-        if (eventEntity.CreatedBy != userId) return Forbid();
-
-        var guests = await _context.Guests
-            .Where(g => g.EventId == eventId)
-            .ToListAsync();
-
+        var guests = await _guestService.GetGuestsByEventAsync(eventId, GetUserId());
         return Ok(guests);
     }
 
-    // GET: api/Guest/{id}
+    /// <summary>
+    /// Mengambil detail tamu berdasarkan ID.
+    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<Guest>> GetGuest(Guid id)
+    public async Task<IActionResult> GetGuest(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        var guest = await _context.Guests.FindAsync(id);
-        if (guest == null) return NotFound("Guest tidak ditemukan.");
-
-        // Validasi bahwa event milik user yang login
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null) return NotFound("Event tidak ditemukan.");
-        if (eventEntity.CreatedBy != userId) return Forbid();
-
-        return Ok(guest);
+        var result = await _guestService.GetGuestByIdAsync(id, GetUserId());
+        if (result == null) return NotFound(new { message = "Tamu tidak ditemukan." });
+        return Ok(result);
     }
 
-    // POST: api/Guest
+    /// <summary>
+    /// Menambahkan tamu baru ke event. QR code dibuat otomatis.
+    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<Guest>> PostGuest(Guest guest)
+    public async Task<IActionResult> PostGuest([FromBody] CreateGuestRequest request)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        // Validasi bahwa event milik user yang login
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null) return NotFound("Event tidak ditemukan.");
-        if (eventEntity.CreatedBy != userId) return Forbid();
-
-        // Generate Token Unik
-        guest.QRCodeToken = "GP-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
-
-        _context.Guests.Add(guest);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetGuest), new { id = guest.Id }, guest);
+        var result = await _guestService.CreateGuestAsync(request, GetUserId());
+        if (result == null) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
+        return CreatedAtAction(nameof(GetGuest), new { id = result.Id }, result);
     }
 
-    // PUT: api/Guest/{id}/checkin
+    /// <summary>
+    /// Check-in tamu. Tidak bisa dilakukan dua kali.
+    /// </summary>
     [HttpPut("{id}/checkin")]
     public async Task<IActionResult> CheckInGuest(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        var guest = await _context.Guests.FindAsync(id);
-        if (guest == null) return NotFound("Guest tidak ditemukan.");
-
-        // Validasi bahwa event milik user yang login
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null) return NotFound("Event tidak ditemukan.");
-        if (eventEntity.CreatedBy != userId) return Forbid();
-
-        // Cegah double check-in
-        if (guest.IsCheckedIn)
-            return BadRequest("Guest sudah di-check-in sebelumnya.");
-
-        guest.IsCheckedIn = true;
-        guest.CheckedInAt = DateTimeOffset.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(guest);
+        var result = await _guestService.CheckInGuestAsync(id, GetUserId());
+        if (result == null) return NotFound(new { message = "Tamu tidak ditemukan atau bukan milik Anda." });
+        return Ok(result);
     }
 
-    // DELETE: api/Guest/{id}
+    /// <summary>
+    /// Menghapus tamu dari event.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGuest(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        var guest = await _context.Guests.FindAsync(id);
-        if (guest == null) return NotFound("Guest tidak ditemukan.");
-
-        // Validasi bahwa event milik user yang login
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null) return NotFound("Event tidak ditemukan.");
-        if (eventEntity.CreatedBy != userId) return Forbid();
-
-        _context.Guests.Remove(guest);
-        await _context.SaveChangesAsync();
-
+        var success = await _guestService.DeleteGuestAsync(id, GetUserId());
+        if (!success) return NotFound(new { message = "Tamu tidak ditemukan atau bukan milik Anda." });
         return NoContent();
     }
 }

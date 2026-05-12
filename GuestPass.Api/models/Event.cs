@@ -20,12 +20,16 @@ public class Event
     [Column("date")]
     public DateTimeOffset Date { get; set; }
 
-    // Properti di C# tetap CreatedBy agar Controller tidak error, 
-    // tapi mapping ke kolom database 'ownerid' sesuai schema SQL Anda.
     [Column("ownerid")]
     public Guid? CreatedBy { get; set; }
 
     [Column("createdat")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTimeOffset CreatedAt { get; set; }
+
+    // Navigation properties
+    [ForeignKey("CreatedBy")]
+    public Profile? Owner { get; set; }
+
+    public ICollection<Guest> Guests { get; set; } = new List<Guest>();
 }

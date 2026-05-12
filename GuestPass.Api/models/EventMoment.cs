@@ -29,4 +29,14 @@ public class EventMoment
     [Column("created_at")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTimeOffset CreatedAt { get; set; }
+
+    // Navigation properties
+    [ForeignKey("EventId")]
+    public Event? Event { get; set; }
+
+    [ForeignKey("ProfileId")]
+    public Profile? Profile { get; set; }
+
+    [ForeignKey("GuestId")]
+    public Guest? Guest { get; set; }
 }

@@ -7,12 +7,20 @@
 publish/
 out/
 
+# Logs
+Logs/
+
 ## [ Konfigurasi & Keamanan ]
 # Simpan koneksi asli Supabase di sini (Jangan di-commit!)
 appsettings.Development.json
 
 # File rahasia bawaan .NET
 usersecrets.json
+
+## [ Node.js / Frontend ]
+node_modules/
+.next/
+.env.local
 
 ## [ Editor & IDE ]
 # Visual Studio Code

@@ -33,4 +33,7 @@ public class Profile
     [Column("createdat")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTimeOffset CreatedAt { get; set; }
+
+    // Navigation property
+    public ICollection<Event> Events { get; set; } = new List<Event>();
 }

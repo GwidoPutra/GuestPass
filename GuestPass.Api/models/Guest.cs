@@ -20,8 +20,6 @@ public class Guest
     [Column("email")]
     public string Email { get; set; } = string.Empty;
 
-    // Properti di C# tetap QRCodeToken agar Controller tidak error,
-    // tapi mapping ke kolom database 'qrcodetoken' sesuai schema SQL Anda.
     [Column("qrcodetoken")]
     public string QRCodeToken { get; set; } = string.Empty;
 
@@ -34,4 +32,8 @@ public class Guest
     [Column("createdat")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTimeOffset CreatedAt { get; set; }
+
+    // Navigation property
+    [ForeignKey("EventId")]
+    public Event? Event { get; set; }
 }

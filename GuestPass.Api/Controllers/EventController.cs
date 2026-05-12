@@ -1,98 +1,75 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using GuestPass.Api.Data;
-using GuestPass.Api.Models;
-using System.Security.Claims; 
+using GuestPass.Api.DTOs;
+using GuestPass.Api.Services;
+using System.Security.Claims;
 
 namespace GuestPass.Api.Controllers;
 
 [Authorize]
 [Route("api/[controller]")]
-[ApiController] // untuk validasi model otomatis
+[ApiController]
 public class EventController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IEventService _eventService;
 
-    public EventController(AppDbContext context)
+    public EventController(IEventService eventService)
     {
-        _context = context;
+        _eventService = eventService;
     }
 
-    // GET: api/Event
+    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    /// <summary>
+    /// Mengambil semua event milik user yang sedang login.
+    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Event>>> GetEvents()
+    public async Task<IActionResult> GetEvents()
     {
-        // Filter agar panitia hanya melihat event buatannya sendiri
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        return await _context.Events
-            .Where(e => e.CreatedBy == userId)
-            .ToListAsync();
+        var events = await _eventService.GetEventsByOwnerAsync(GetUserId());
+        return Ok(events);
     }
 
-    // GET: api/Event/{id}
+    /// <summary>
+    /// Mengambil detail event berdasarkan ID.
+    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<Event>> GetEvent(Guid id)
+    public async Task<IActionResult> GetEvent(Guid id)
     {
-        var @event = await _context.Events.FindAsync(id);
-
-        if (@event == null) return NotFound();
-
-        // Proteksi supaya tidak bisa mengintip event orang lain lewat ID
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        if (@event.CreatedBy != userId) return Forbid();
-
-        return @event;
+        var result = await _eventService.GetEventByIdAsync(id, GetUserId());
+        if (result == null) return NotFound(new { message = "Event tidak ditemukan." });
+        return Ok(result);
     }
 
-    // POST: api/Event
+    /// <summary>
+    /// Membuat event baru.
+    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<Event>> PostEvent(Event @event)
+    public async Task<IActionResult> PostEvent([FromBody] CreateEventRequest request)
     {
-        // Ambil ID user dari token JWT secara otomatis
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
-
-        @event.CreatedBy = Guid.Parse(userId); // Set pemilik event
-        
-        _context.Events.Add(@event);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetEvent), new { id = @event.Id }, @event);
+        var result = await _eventService.CreateEventAsync(request, GetUserId());
+        return CreatedAtAction(nameof(GetEvent), new { id = result.Id }, result);
     }
 
-    // PUT: api/Event/{id}
+    /// <summary>
+    /// Memperbarui event yang sudah ada.
+    /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutEvent(Guid id, Event updatedEvent)
+    public async Task<IActionResult> PutEvent(Guid id, [FromBody] UpdateEventRequest request)
     {
-        var @event = await _context.Events.FindAsync(id);
-        if (@event == null) return NotFound();
-
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        if (@event.CreatedBy != userId) return Forbid();
-
-        @event.Name = updatedEvent.Name;
-        @event.Location = updatedEvent.Location;
-        @event.Date = updatedEvent.Date;
-
-        await _context.SaveChangesAsync();
-        return Ok(@event);
+        var result = await _eventService.UpdateEventAsync(id, request, GetUserId());
+        if (result == null) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
+        return Ok(result);
     }
 
-    // DELETE: api/Event/{id}
+    /// <summary>
+    /// Menghapus event beserta seluruh data tamu.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteEvent(Guid id)
     {
-        var @event = await _context.Events.FindAsync(id);
-        if (@event == null) return NotFound();
-
-        // Proteksi supaya tidak bisa menghapus event milik orang lain
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        if (@event.CreatedBy != userId) return Forbid();
-
-        _context.Events.Remove(@event);
-        await _context.SaveChangesAsync();
-
+        var success = await _eventService.DeleteEventAsync(id, GetUserId());
+        if (!success) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
         return NoContent();
     }
 }

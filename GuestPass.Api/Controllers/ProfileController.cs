@@ -1,94 +1,64 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using GuestPass.Api.Data;
-using GuestPass.Api.DTOs;
+using GuestPass.Api.Services;
 
 namespace GuestPass.Api.Controllers;
 
-[Authorize]
-[ApiController]
+/// <summary>
+/// Controller untuk mengelola akun panitia. Hanya admin yang bisa mengakses.
+/// </summary>
+[Authorize(Roles = "admin")]
 [Route("api/[controller]")]
+[ApiController]
 public class ProfileController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IProfileService _profileService;
 
-    public ProfileController(AppDbContext context)
+    public ProfileController(IProfileService profileService)
     {
-        _context = context;
+        _profileService = profileService;
     }
 
-    // GET: api/Profile (Ambil Semua Data tanpa PasswordHash)
+    /// <summary>
+    /// Mengambil semua profil panitia.
+    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetProfiles()
+    public async Task<IActionResult> GetProfiles()
     {
-        var profiles = await _context.Profiles
-            .Select(p => new ProfileResponse
-            {
-                Id = p.Id,
-                Username = p.Username,
-                Email = p.Email,
-                FullName = p.FullName,
-                Role = p.Role,
-                IsApproved = p.IsApproved,
-                CreatedAt = p.CreatedAt
-            })
-            .ToListAsync();
-
+        var profiles = await _profileService.GetAllProfilesAsync();
         return Ok(profiles);
     }
 
-    // GET: api/Profile/{id}
+    /// <summary>
+    /// Mengambil detail profil berdasarkan ID.
+    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProfileResponse>> GetProfile(Guid id)
+    public async Task<IActionResult> GetProfile(Guid id)
     {
-        var profile = await _context.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
-
-        return Ok(new ProfileResponse
-        {
-            Id = profile.Id,
-            Username = profile.Username,
-            Email = profile.Email,
-            FullName = profile.FullName,
-            Role = profile.Role,
-            IsApproved = profile.IsApproved,
-            CreatedAt = profile.CreatedAt
-        });
+        var profile = await _profileService.GetProfileByIdAsync(id);
+        if (profile == null) return NotFound(new { message = "Profil tidak ditemukan." });
+        return Ok(profile);
     }
 
-    // DELETE: api/Profile/{id} (Hapus Data)
+    /// <summary>
+    /// Menghapus akun panitia.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProfile(Guid id)
     {
-        var profile = await _context.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
-
-        _context.Profiles.Remove(profile);
-        await _context.SaveChangesAsync();
-
+        var success = await _profileService.DeleteProfileAsync(id);
+        if (!success) return NotFound(new { message = "Profil tidak ditemukan." });
         return NoContent();
     }
 
-    // PUT: api/Profile/{id}/approve (Toggle approval status)
+    /// <summary>
+    /// Toggle status persetujuan akun panitia.
+    /// </summary>
     [HttpPut("{id}/approve")]
     public async Task<IActionResult> ToggleApproval(Guid id)
     {
-        var profile = await _context.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
-
-        profile.IsApproved = !profile.IsApproved;
-        await _context.SaveChangesAsync();
-
-        return Ok(new ProfileResponse
-        {
-            Id = profile.Id,
-            Username = profile.Username,
-            Email = profile.Email,
-            FullName = profile.FullName,
-            Role = profile.Role,
-            IsApproved = profile.IsApproved,
-            CreatedAt = profile.CreatedAt
-        });
+        var result = await _profileService.ToggleApprovalAsync(id);
+        if (result == null) return NotFound(new { message = "Profil tidak ditemukan." });
+        return Ok(result);
     }
 }
