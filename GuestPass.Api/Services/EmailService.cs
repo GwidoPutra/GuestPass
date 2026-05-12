@@ -21,13 +21,13 @@ public class EmailService : IEmailService
     public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken, DateTimeOffset eventDate, string eventLocation)
     {
         var emailSettings = _configuration.GetSection("Email");
-        var apiKey = emailSettings["ResendApiKey"] ?? "";
-        var senderEmail = emailSettings["SenderEmail"] ?? "onboarding@resend.dev";
+        var apiKey = emailSettings["BrevoApiKey"] ?? emailSettings["ResendApiKey"] ?? "";
+        var senderEmail = emailSettings["SenderEmail"] ?? "noreply@guestpass.com";
         var senderName = emailSettings["SenderName"] ?? "GuestPass";
 
         if (string.IsNullOrEmpty(apiKey))
         {
-            _logger.LogWarning("Resend API key belum dikonfigurasi, email tidak dikirim");
+            _logger.LogWarning("Email API key belum dikonfigurasi, email tidak dikirim");
             return;
         }
 
@@ -80,16 +80,17 @@ public class EmailService : IEmailService
                 </p>
             </div>";
 
-        // Send via Resend API
+        // Send via Brevo API
         var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        client.DefaultRequestHeaders.Add("api-key", apiKey);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var payload = new
         {
-            from = $"{senderName} <{senderEmail}>",
-            to = new[] { toEmail },
+            sender = new { name = senderName, email = senderEmail },
+            to = new[] { new { email = toEmail, name = guestName } },
             subject = $"Undangan Event: {eventName} - QR Code Check-in Anda",
-            html = htmlBody
+            htmlContent = htmlBody
         };
 
         var json = JsonSerializer.Serialize(payload);
@@ -97,7 +98,7 @@ public class EmailService : IEmailService
 
         try
         {
-            var response = await client.PostAsync("https://api.resend.com/emails", content);
+            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
@@ -107,10 +108,10 @@ public class EmailService : IEmailService
             else
             {
                 _logger.LogError("Gagal mengirim email ke {Email}. Status: {Status}, Response: {Response}", toEmail, response.StatusCode, responseBody);
-                throw new Exception($"Resend API error: {response.StatusCode} - {responseBody}");
+                throw new Exception($"Brevo API error: {response.StatusCode} - {responseBody}");
             }
         }
-        catch (Exception ex) when (ex is not Exception { Message: var m } || !m.StartsWith("Resend API error"))
+        catch (Exception ex) when (ex is not Exception { Message: var m } || !m.StartsWith("Brevo API error"))
         {
             _logger.LogError(ex, "Gagal mengirim email ke {Email}", toEmail);
             throw;
