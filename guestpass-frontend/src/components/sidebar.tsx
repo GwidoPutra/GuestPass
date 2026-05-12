@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { LayoutDashboard, Calendar, Users, Sparkles } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, Sparkles, ScanLine } from "lucide-react";
 
 const navItems = [
   { label: "Ringkasan", href: "/dashboard", icon: LayoutDashboard },
   { label: "Event", href: "/dashboard/events", icon: Calendar },
+  { label: "Scanner", href: "/dashboard/scanner", icon: ScanLine },
   { label: "Panitia", href: "/dashboard/committees", icon: Users },
 ];
 

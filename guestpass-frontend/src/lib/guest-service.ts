@@ -23,6 +23,11 @@ export async function checkInGuest(id: string): Promise<Guest> {
   return response.data;
 }
 
+export async function checkInByToken(token: string): Promise<Guest> {
+  const response = await api.post<Guest>("/Guest/checkin-by-token", { token });
+  return response.data;
+}
+
 export async function deleteGuest(id: string): Promise<void> {
   await api.delete(`/Guest/${id}`);
 }
