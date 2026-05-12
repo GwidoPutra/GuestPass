@@ -9,8 +9,9 @@ import { Event, Guest } from "@/lib/types";
 import { useToast } from "@/lib/toast-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, MapPin, Calendar, Users, UserCheck, Clock, Pencil, Trash2 } from "lucide-react";
+import { MapPin, Users, UserCheck, Clock, Pencil, Trash2 } from "lucide-react";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -32,7 +33,7 @@ export default function EventDetailPage() {
         setEvent(eventData);
         setGuests(guestsData);
       } catch {
-        setError("Event not found.");
+        setError("Event tidak ditemukan.");
       } finally {
         setIsLoading(false);
       }
@@ -44,10 +45,10 @@ export default function EventDetailPage() {
     setIsDeleting(true);
     try {
       await deleteEvent(id);
-      showToast("Event deleted.", "success");
+      showToast("Event berhasil dihapus.", "success");
       router.push("/dashboard/events");
     } catch {
-      setError("Failed to delete event.");
+      setError("Gagal menghapus event.");
       setIsDeleting(false);
     }
   };
@@ -80,9 +81,11 @@ export default function EventDetailPage() {
   if (error || !event) {
     return (
       <div className="max-w-3xl space-y-4 animate-in-page">
-        <Link href="/dashboard/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to events
-        </Link>
+        <Breadcrumb items={[
+          { label: "Ringkasan", href: "/dashboard" },
+          { label: "Event", href: "/dashboard/events" },
+          { label: "Error" },
+        ]} />
         <div className="rounded-lg bg-destructive/8 border border-destructive/15 px-4 py-3 text-sm text-destructive">{error}</div>
       </div>
     );
@@ -90,9 +93,11 @@ export default function EventDetailPage() {
 
   return (
     <div className="space-y-6 max-w-3xl animate-in-page">
-      <Link href="/dashboard/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to events
-      </Link>
+      <Breadcrumb items={[
+        { label: "Ringkasan", href: "/dashboard" },
+        { label: "Event", href: "/dashboard/events" },
+        { label: event.name },
+      ]} />
 
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -102,7 +107,7 @@ export default function EventDetailPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight">{event.name}</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Created {formatDate(event.createdAt)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Dibuat {formatDate(event.createdAt)}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -110,7 +115,7 @@ export default function EventDetailPage() {
             <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
           </Link>
           <Button variant="ghost" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/8" onClick={() => setShowDelete(true)}>
-            <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Hapus
           </Button>
         </div>
       </div>
@@ -124,7 +129,7 @@ export default function EventDetailPage() {
                 <MapPin className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Location</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Lokasi</p>
                 <p className="text-sm font-medium mt-0.5">{event.location}</p>
               </div>
             </div>
@@ -133,7 +138,7 @@ export default function EventDetailPage() {
                 <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Date & Time</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Tanggal & Waktu</p>
                 <p className="text-sm font-medium mt-0.5">{formatDate(event.date)}</p>
               </div>
             </div>
@@ -144,9 +149,9 @@ export default function EventDetailPage() {
       {/* Guest stats */}
       <Card>
         <CardHeader className="flex-row items-center justify-between pb-4">
-          <CardTitle className="text-[15px] font-semibold">Guest Statistics</CardTitle>
+          <CardTitle className="text-[15px] font-semibold">Statistik Tamu</CardTitle>
           <Link href={`/dashboard/events/${id}/guests`} className={buttonVariants({ variant: "outline", size: "sm", className: "h-8" })}>
-            <Users className="w-3.5 h-3.5 mr-1.5" /> Manage Guests
+            <Users className="w-3.5 h-3.5 mr-1.5" /> Kelola Tamu
           </Link>
         </CardHeader>
         <CardContent>
@@ -157,11 +162,11 @@ export default function EventDetailPage() {
             </div>
             <div className="text-center p-4 rounded-xl bg-chart-2/5 ring-1 ring-chart-2/10">
               <p className="text-2xl font-semibold tracking-tight text-chart-2">{checkedInCount}</p>
-              <p className="text-[11px] text-muted-foreground mt-1 font-medium uppercase tracking-wider">Checked In</p>
+              <p className="text-[11px] text-muted-foreground mt-1 font-medium uppercase tracking-wider">Check-in</p>
             </div>
             <div className="text-center p-4 rounded-xl bg-chart-3/5 ring-1 ring-chart-3/10">
               <p className="text-2xl font-semibold tracking-tight text-chart-3">{guests.length - checkedInCount}</p>
-              <p className="text-[11px] text-muted-foreground mt-1 font-medium uppercase tracking-wider">Pending</p>
+              <p className="text-[11px] text-muted-foreground mt-1 font-medium uppercase tracking-wider">Menunggu</p>
             </div>
           </div>
 
@@ -169,7 +174,7 @@ export default function EventDetailPage() {
           {guests.length > 0 && (
             <div className="mt-5 pt-4 border-t border-border/60">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Check-in progress</span>
+                <span className="text-xs text-muted-foreground">Progres check-in</span>
                 <span className="text-xs font-medium text-foreground">{checkInRate}%</span>
               </div>
               <div className="h-2 rounded-full bg-muted/60 overflow-hidden">
@@ -187,13 +192,13 @@ export default function EventDetailPage() {
       <Dialog open={showDelete} onOpenChange={setShowDelete}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-lg">Delete &quot;{event.name}&quot;?</DialogTitle>
-            <DialogDescription className="text-[13px]">This will permanently delete the event and all associated guest data.</DialogDescription>
+            <DialogTitle className="text-lg">Hapus &quot;{event.name}&quot;?</DialogTitle>
+            <DialogDescription className="text-[13px]">Tindakan ini akan menghapus event beserta seluruh data tamu secara permanen.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={isDeleting}>Batal</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete Event"}
+              {isDeleting ? "Menghapus..." : "Hapus Event"}
             </Button>
           </DialogFooter>
         </DialogContent>

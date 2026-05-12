@@ -9,7 +9,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { UserPlus } from "lucide-react";
 
 export default function CreateGuestPage() {
   const params = useParams();
@@ -25,19 +26,19 @@ export default function CreateGuestPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!name || !email) { setError("Name and email are required."); return; }
+    if (!name || !email) { setError("Nama dan email wajib diisi."); return; }
 
     setIsLoading(true);
     try {
       await createGuest({ eventId, name, email });
-      showToast("Guest added successfully.", "success");
+      showToast("Tamu berhasil ditambahkan.", "success");
       router.push(`/dashboard/events/${eventId}/guests`);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Failed to add guest.");
+        setError(axiosErr.response?.data || "Gagal menambahkan tamu.");
       } else {
-        setError("Network error.");
+        setError("Kesalahan jaringan.");
       }
     } finally {
       setIsLoading(false);
@@ -46,14 +47,17 @@ export default function CreateGuestPage() {
 
   return (
     <div className="max-w-lg space-y-6 animate-in-page">
-      <Link href={`/dashboard/events/${eventId}/guests`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to guests
-      </Link>
+      <Breadcrumb items={[
+        { label: "Ringkasan", href: "/dashboard" },
+        { label: "Event", href: "/dashboard/events" },
+        { label: "Tamu", href: `/dashboard/events/${eventId}/guests` },
+        { label: "Tambah Tamu" },
+      ]} />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold tracking-tight">Add Guest</CardTitle>
-          <CardDescription className="text-[13px]">A unique QR code will be generated automatically.</CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">Tambah Tamu</CardTitle>
+          <CardDescription className="text-[13px]">Kode QR unik akan dibuat secara otomatis.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -65,12 +69,16 @@ export default function CreateGuestPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[13px] font-medium">Full Name</Label>
-              <Input id="name" placeholder="Guest full name" value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
+              <Label htmlFor="name" className="text-[13px] font-medium">
+                Nama Lengkap <span className="text-destructive">*</span>
+              </Label>
+              <Input id="name" placeholder="Nama lengkap tamu" value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[13px] font-medium">Email</Label>
-              <Input id="email" type="email" placeholder="guest@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
+              <Label htmlFor="email" className="text-[13px] font-medium">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input id="email" type="email" placeholder="tamu@contoh.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
             </div>
 
             <div className="flex gap-3 pt-3">
@@ -78,16 +86,16 @@ export default function CreateGuestPage() {
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Adding...
+                    Menambahkan...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <UserPlus className="w-3.5 h-3.5" />
-                    Add Guest
+                    Tambah Tamu
                   </span>
                 )}
               </Button>
-              <Link href={`/dashboard/events/${eventId}/guests`} className={buttonVariants({ variant: "outline", className: "h-9" })}>Cancel</Link>
+              <Link href={`/dashboard/events/${eventId}/guests`} className={buttonVariants({ variant: "outline", className: "h-9" })}>Batal</Link>
             </div>
           </form>
         </CardContent>

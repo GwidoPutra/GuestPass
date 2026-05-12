@@ -14,8 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GuestPass - Event Guest Management",
+  title: "GuestPass - Manajemen Tamu Event",
   description: "Sistem manajemen tamu event dengan QR Code check-in",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

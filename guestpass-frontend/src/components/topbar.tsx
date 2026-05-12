@@ -2,16 +2,37 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, X, LayoutDashboard, Calendar, Users, User } from "lucide-react";
+import { LogOut, Menu, X, LayoutDashboard, Calendar, Users, User, Moon, Sun } from "lucide-react";
 
 export function TopBar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      setIsDark(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -49,7 +70,20 @@ export function TopBar() {
         <div className="hidden md:block" />
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Mode terang" : "Mode gelap"}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+
+          <div className="w-px h-6 bg-border/60 hidden sm:block" />
+
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/60">
             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="w-3 h-3 text-primary" />
@@ -61,12 +95,14 @@ export function TopBar() {
               {user?.role || "user"}
             </Badge>
           </div>
+
           <div className="w-px h-6 bg-border/60 hidden sm:block" />
+
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            aria-label="Logout"
+            aria-label="Keluar"
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/8"
           >
             <LogOut className="w-4 h-4" />
@@ -78,13 +114,13 @@ export function TopBar() {
       {mobileMenuOpen && (
         <nav className="md:hidden border-t border-border/60 bg-background/95 glass px-3 py-3 space-y-1 animate-in-page">
           <a href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
-            <LayoutDashboard className="w-4 h-4" /> Overview
+            <LayoutDashboard className="w-4 h-4" /> Ringkasan
           </a>
           <a href="/dashboard/events" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
-            <Calendar className="w-4 h-4" /> Events
+            <Calendar className="w-4 h-4" /> Event
           </a>
           <a href="/dashboard/committees" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
-            <Users className="w-4 h-4" /> Committees
+            <Users className="w-4 h-4" /> Panitia
           </a>
         </nav>
       )}

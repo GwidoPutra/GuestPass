@@ -10,9 +10,10 @@ import { useToast } from "@/lib/toast-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Plus, Users, UserCheck, Clock, QrCode, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Users, UserCheck, Clock, QrCode, Trash2, CheckCircle } from "lucide-react";
 
 export default function GuestsPage() {
   const params = useParams();
@@ -34,7 +35,7 @@ export default function GuestsPage() {
         setEvent(eventData);
         setGuests(guestsData);
       } catch {
-        setError("Failed to load guests.");
+        setError("Gagal memuat daftar tamu.");
       } finally {
         setIsLoading(false);
       }
@@ -49,9 +50,9 @@ export default function GuestsPage() {
       await deleteGuest(deleteId);
       setGuests(guests.filter((g) => g.id !== deleteId));
       setDeleteId(null);
-      showToast("Guest removed.", "success");
+      showToast("Tamu berhasil dihapus.", "success");
     } catch {
-      setError("Failed to delete guest.");
+      setError("Gagal menghapus tamu.");
     } finally {
       setIsDeleting(false);
     }
@@ -62,13 +63,13 @@ export default function GuestsPage() {
     try {
       const updated = await checkInGuest(guestId);
       setGuests(guests.map((g) => (g.id === guestId ? updated : g)));
-      showToast("Guest checked in.", "success");
+      showToast("Tamu berhasil check-in.", "success");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        showToast(axiosErr.response?.data || "Check-in failed.", "error");
+        showToast(axiosErr.response?.data || "Check-in gagal.", "error");
       } else {
-        showToast("Check-in failed.", "error");
+        showToast("Check-in gagal.", "error");
       }
     } finally {
       setCheckingIn(null);
@@ -80,7 +81,7 @@ export default function GuestsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl animate-in-page">
-        <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-4 w-48 bg-muted rounded animate-pulse" />
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="h-7 w-24 bg-muted rounded-md animate-pulse" />
@@ -100,18 +101,21 @@ export default function GuestsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl animate-in-page">
-      <Link href={`/dashboard/events/${eventId}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to {event?.name || "event"}
-      </Link>
+      <Breadcrumb items={[
+        { label: "Ringkasan", href: "/dashboard" },
+        { label: "Event", href: "/dashboard/events" },
+        { label: event?.name || "Event", href: `/dashboard/events/${eventId}` },
+        { label: "Tamu" },
+      ]} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Guests</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Daftar Tamu</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{event?.name}</p>
         </div>
         <Link href={`/dashboard/events/${eventId}/guests/create`} className={buttonVariants({ className: "h-9" })}>
-          <Plus className="w-4 h-4 mr-1.5" /> Add Guest
+          <Plus className="w-4 h-4 mr-1.5" /> Tambah Tamu
         </Link>
       </div>
 
@@ -135,7 +139,7 @@ export default function GuestsPage() {
             </div>
             <div>
               <p className="text-xl font-semibold tracking-tight">{checkedInCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Checked In</p>
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Check-in</p>
             </div>
           </CardContent>
         </Card>
@@ -146,7 +150,7 @@ export default function GuestsPage() {
             </div>
             <div>
               <p className="text-xl font-semibold tracking-tight">{guests.length - checkedInCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Pending</p>
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Menunggu</p>
             </div>
           </CardContent>
         </Card>
@@ -165,10 +169,10 @@ export default function GuestsPage() {
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
               <Users className="w-6 h-6 text-muted-foreground/50" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">No guests yet</p>
-            <p className="text-xs text-muted-foreground mb-5">Add your first guest to this event</p>
+            <p className="text-sm font-medium text-foreground mb-1">Belum ada tamu</p>
+            <p className="text-xs text-muted-foreground mb-5">Tambahkan tamu pertama ke event ini</p>
             <Link href={`/dashboard/events/${eventId}/guests/create`} className={buttonVariants({ size: "sm" })}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Guest
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Tambah Tamu
             </Link>
           </CardContent>
         </Card>
@@ -177,10 +181,10 @@ export default function GuestsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-[12px] font-semibold uppercase tracking-wider">Name</TableHead>
+                <TableHead className="text-[12px] font-semibold uppercase tracking-wider">Nama</TableHead>
                 <TableHead className="text-[12px] font-semibold uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[12px] font-semibold uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[12px] font-semibold uppercase tracking-wider text-right">Actions</TableHead>
+                <TableHead className="text-[12px] font-semibold uppercase tracking-wider text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -196,12 +200,12 @@ export default function GuestsPage() {
                     {guest.isCheckedIn ? (
                       <Badge variant="secondary" className="bg-chart-2/10 text-chart-2 border-0 gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Checked In
+                        Hadir
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="gap-1">
                         <Clock className="w-3 h-3" />
-                        Pending
+                        Menunggu
                       </Badge>
                     )}
                   </TableCell>
@@ -221,7 +225,7 @@ export default function GuestsPage() {
                           {checkingIn === guest.id ? (
                             <span className="w-3 h-3 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
                           ) : (
-                            "Check in"
+                            "Check-in"
                           )}
                         </Button>
                       )}
@@ -246,13 +250,13 @@ export default function GuestsPage() {
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-lg">Remove guest</DialogTitle>
-            <DialogDescription className="text-[13px]">Are you sure you want to remove this guest? This action cannot be undone.</DialogDescription>
+            <DialogTitle className="text-lg">Hapus Tamu</DialogTitle>
+            <DialogDescription className="text-[13px]">Apakah Anda yakin ingin menghapus tamu ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>Batal</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Removing..." : "Remove Guest"}
+              {isDeleting ? "Menghapus..." : "Hapus Tamu"}
             </Button>
           </DialogFooter>
         </DialogContent>

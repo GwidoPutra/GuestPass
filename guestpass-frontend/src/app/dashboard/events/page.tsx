@@ -7,6 +7,7 @@ import { Event } from "@/lib/types";
 import { useToast } from "@/lib/toast-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, MapPin, Calendar, Pencil, Trash2, ArrowRight } from "lucide-react";
 
@@ -24,7 +25,7 @@ export default function EventsPage() {
         const data = await getEvents();
         setEvents(data);
       } catch {
-        setError("Failed to load events.");
+        setError("Gagal memuat daftar event.");
       } finally {
         setIsLoading(false);
       }
@@ -39,9 +40,9 @@ export default function EventsPage() {
       await deleteEvent(deleteId);
       setEvents(events.filter((e) => e.id !== deleteId));
       setDeleteId(null);
-      showToast("Event deleted successfully.", "success");
+      showToast("Event berhasil dihapus.", "success");
     } catch {
-      setError("Failed to delete event.");
+      setError("Gagal menghapus event.");
     } finally {
       setIsDeleting(false);
     }
@@ -76,16 +77,22 @@ export default function EventsPage() {
 
   return (
     <div className="space-y-6 max-w-5xl animate-in-page">
+      {/* Breadcrumb */}
+      <Breadcrumb items={[
+        { label: "Ringkasan", href: "/dashboard" },
+        { label: "Event" },
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Events</h1>
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Event</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {events.length} event{events.length !== 1 ? "s" : ""} total
+            {events.length} event total
           </p>
         </div>
         <Link href="/dashboard/events/create" className={buttonVariants({ className: "h-9" })}>
-          <Plus className="w-4 h-4 mr-1.5" /> New Event
+          <Plus className="w-4 h-4 mr-1.5" /> Event Baru
         </Link>
       </div>
 
@@ -101,10 +108,10 @@ export default function EventsPage() {
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
               <Calendar className="w-6 h-6 text-muted-foreground/50" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">No events yet</p>
-            <p className="text-xs text-muted-foreground mb-5">Create your first event to get started</p>
+            <p className="text-sm font-medium text-foreground mb-1">Belum ada event</p>
+            <p className="text-xs text-muted-foreground mb-5">Buat event pertama Anda untuk memulai</p>
             <Link href="/dashboard/events/create" className={buttonVariants({ size: "sm" })}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Event
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Buat Event
             </Link>
           </CardContent>
         </Card>
@@ -159,7 +166,7 @@ export default function EventsPage() {
                     href={`/dashboard/events/${event.id}/guests`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                   >
-                    Manage guests <ArrowRight className="w-3 h-3" />
+                    Kelola tamu <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </CardContent>
@@ -172,17 +179,17 @@ export default function EventsPage() {
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-lg">Delete event</DialogTitle>
+            <DialogTitle className="text-lg">Hapus Event</DialogTitle>
             <DialogDescription className="text-[13px]">
-              This action cannot be undone. All guest data associated with this event will also be deleted.
+              Tindakan ini tidak dapat dibatalkan. Semua data tamu yang terkait dengan event ini juga akan dihapus.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>
-              Cancel
+              Batal
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete Event"}
+              {isDeleting ? "Menghapus..." : "Hapus Event"}
             </Button>
           </DialogFooter>
         </DialogContent>

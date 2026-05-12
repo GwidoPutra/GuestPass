@@ -6,9 +6,9 @@ import Image from "next/image";
 import { LayoutDashboard, Calendar, Users, Sparkles } from "lucide-react";
 
 const navItems = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Events", href: "/dashboard/events", icon: Calendar },
-  { label: "Committees", href: "/dashboard/committees", icon: Users },
+  { label: "Ringkasan", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Event", href: "/dashboard/events", icon: Calendar },
+  { label: "Panitia", href: "/dashboard/committees", icon: Users },
 ];
 
 export function Sidebar() {

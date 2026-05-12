@@ -9,7 +9,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { Plus } from "lucide-react";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -26,21 +27,21 @@ export default function CreateEventPage() {
     setError("");
 
     if (!name || !location || !date) {
-      setError("All fields are required.");
+      setError("Semua field wajib diisi.");
       return;
     }
 
     setIsLoading(true);
     try {
       await createEvent({ name, location, date: new Date(date).toISOString() });
-      showToast("Event created successfully.", "success");
+      showToast("Event berhasil dibuat.", "success");
       router.push("/dashboard/events");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Failed to create event.");
+        setError(axiosErr.response?.data || "Gagal membuat event.");
       } else {
-        setError("Network error.");
+        setError("Kesalahan jaringan.");
       }
     } finally {
       setIsLoading(false);
@@ -49,17 +50,16 @@ export default function CreateEventPage() {
 
   return (
     <div className="max-w-lg space-y-6 animate-in-page">
-      <Link
-        href="/dashboard/events"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to events
-      </Link>
+      <Breadcrumb items={[
+        { label: "Ringkasan", href: "/dashboard" },
+        { label: "Event", href: "/dashboard/events" },
+        { label: "Buat Event" },
+      ]} />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold tracking-tight">Create Event</CardTitle>
-          <CardDescription className="text-[13px]">Add a new event to start managing guests.</CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">Buat Event</CardTitle>
+          <CardDescription className="text-[13px]">Tambahkan event baru untuk mulai mengelola tamu.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -71,10 +71,12 @@ export default function CreateEventPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[13px] font-medium">Event Name</Label>
+              <Label htmlFor="name" className="text-[13px] font-medium">
+                Nama Event <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="name"
-                placeholder="e.g. Tech Conference 2026"
+                placeholder="cth. Konferensi Teknologi 2026"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-10"
@@ -82,10 +84,12 @@ export default function CreateEventPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location" className="text-[13px] font-medium">Location</Label>
+              <Label htmlFor="location" className="text-[13px] font-medium">
+                Lokasi <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="location"
-                placeholder="e.g. Convention Center, Jakarta"
+                placeholder="cth. Convention Center, Jakarta"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="h-10"
@@ -93,7 +97,9 @@ export default function CreateEventPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date" className="text-[13px] font-medium">Date & Time</Label>
+              <Label htmlFor="date" className="text-[13px] font-medium">
+                Tanggal & Waktu <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="date"
                 type="datetime-local"
@@ -108,16 +114,16 @@ export default function CreateEventPage() {
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Creating...
+                    Membuat...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Plus className="w-3.5 h-3.5" />
-                    Create Event
+                    Buat Event
                   </span>
                 )}
               </Button>
-              <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", className: "h-9" })}>Cancel</Link>
+              <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", className: "h-9" })}>Batal</Link>
             </div>
           </form>
         </CardContent>

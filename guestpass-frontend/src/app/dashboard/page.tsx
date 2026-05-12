@@ -60,9 +60,9 @@ export default function DashboardPage() {
     <div className="space-y-8 max-w-5xl animate-in-page">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Overview</h1>
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Ringkasan</h1>
         <p className="text-sm text-muted-foreground">
-          Welcome back, <span className="capitalize font-medium text-foreground/80">{user?.role}</span>. Here&apos;s what&apos;s happening.
+          Selamat datang kembali, <span className="capitalize font-medium text-foreground/80">{user?.role}</span>. Berikut ringkasan aktivitas Anda.
         </p>
       </div>
 
@@ -72,7 +72,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[13px] text-muted-foreground font-medium">Events</p>
+                <p className="text-[13px] text-muted-foreground font-medium">Event</p>
                 <p className="text-3xl font-semibold tracking-tight">
                   {isLoading ? <span className="inline-block w-10 h-8 bg-muted rounded-md animate-pulse" /> : stats.totalEvents}
                 </p>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[13px] text-muted-foreground font-medium">Total Guests</p>
+                <p className="text-[13px] text-muted-foreground font-medium">Total Tamu</p>
                 <p className="text-3xl font-semibold tracking-tight">
                   {isLoading ? <span className="inline-block w-10 h-8 bg-muted rounded-md animate-pulse" /> : stats.totalGuests}
                 </p>
@@ -104,7 +104,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[13px] text-muted-foreground font-medium">Checked In</p>
+                <p className="text-[13px] text-muted-foreground font-medium">Sudah Check-in</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-semibold tracking-tight">
                     {isLoading ? (
@@ -134,9 +134,9 @@ export default function DashboardPage() {
         {/* Recent events */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between pb-4">
-            <CardTitle className="text-[15px] font-semibold">Recent Events</CardTitle>
+            <CardTitle className="text-[15px] font-semibold">Event Terbaru</CardTitle>
             <Link href="/dashboard/events" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium">
-              View all <ArrowRight className="w-3 h-3" />
+              Lihat semua <ArrowRight className="w-3 h-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -151,9 +151,9 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
                   <Calendar className="w-5 h-5 text-muted-foreground/50" />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">No events yet.</p>
+                <p className="text-sm text-muted-foreground mb-4">Belum ada event.</p>
                 <Link href="/dashboard/events/create" className={buttonVariants({ size: "sm" })}>
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Event
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Buat Event
                 </Link>
               </div>
             ) : (
@@ -187,17 +187,17 @@ export default function DashboardPage() {
         {/* Quick actions */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-[15px] font-semibold">Quick Actions</CardTitle>
+            <CardTitle className="text-[15px] font-semibold">Aksi Cepat</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Link href="/dashboard/events/create" className={buttonVariants({ variant: "default", size: "sm", className: "w-full justify-start h-9" })}>
-              <Plus className="w-3.5 h-3.5 mr-2.5" /> New Event
+              <Plus className="w-3.5 h-3.5 mr-2.5" /> Event Baru
             </Link>
             <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start h-9" })}>
-              <Calendar className="w-3.5 h-3.5 mr-2.5" /> Manage Events
+              <Calendar className="w-3.5 h-3.5 mr-2.5" /> Kelola Event
             </Link>
             <Link href="/dashboard/committees" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start h-9" })}>
-              <Users className="w-3.5 h-3.5 mr-2.5" /> Manage Committees
+              <Users className="w-3.5 h-3.5 mr-2.5" /> Kelola Panitia
             </Link>
           </CardContent>
         </Card>
