@@ -7,6 +7,7 @@ import 'package:guestpass_mobile/logic/auth/auth_state.dart';
 import 'package:guestpass_mobile/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:guestpass_mobile/presentation/screens/events/event_list_screen.dart';
 import 'package:guestpass_mobile/presentation/screens/scanner/scanner_screen.dart';
+import 'package:guestpass_mobile/presentation/screens/committees/committee_list_screen.dart';
 
 /// Shell utama dengan Bottom Navigation Bar (4 tab)
 class MainShell extends StatefulWidget {
@@ -23,7 +24,7 @@ class _MainShellState extends State<MainShell> {
     const DashboardScreen(),
     const EventListScreen(),
     const ScannerScreen(),
-    const _PlaceholderScreen(title: 'Panitia', icon: Icons.people),
+    const CommitteeListScreen(),
   ];
 
   @override
@@ -71,43 +72,6 @@ class _MainShellState extends State<MainShell> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Placeholder screen untuk tab yang belum diimplementasi
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _PlaceholderScreen({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: AppColors.muted),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.muted,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Segera hadir',
-              style: TextStyle(fontSize: 13, color: AppColors.muted),
-            ),
-          ],
         ),
       ),
     );
