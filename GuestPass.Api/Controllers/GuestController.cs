@@ -19,14 +19,27 @@ public class GuestController : ControllerBase
     }
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private string GetUserRole() => User.FindFirstValue(ClaimTypes.Role) ?? "panitia";
 
     /// <summary>
-    /// Mengambil daftar tamu berdasarkan event ID.
+    /// Mengambil daftar tamu berdasarkan event ID. SuperAdmin bisa akses semua.
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetGuests([FromQuery] Guid eventId)
+    public async Task<IActionResult> GetGuests([FromQuery] Guid? eventId)
     {
-        var guests = await _guestService.GetGuestsByEventAsync(eventId, GetUserId());
+        var role = GetUserRole();
+
+        // SuperAdmin tanpa eventId = ambil semua tamu
+        if (role == "superadmin" && eventId == null)
+        {
+            var allGuests = await _guestService.GetAllGuestsAsync();
+            return Ok(allGuests);
+        }
+
+        if (eventId == null)
+            return BadRequest(new { message = "eventId wajib diisi." });
+
+        var guests = await _guestService.GetGuestsByEventAsync(eventId.Value, GetUserId(), role);
         return Ok(guests);
     }
 
@@ -36,7 +49,7 @@ public class GuestController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetGuest(Guid id)
     {
-        var result = await _guestService.GetGuestByIdAsync(id, GetUserId());
+        var result = await _guestService.GetGuestByIdAsync(id, GetUserId(), GetUserRole());
         if (result == null) return NotFound(new { message = "Tamu tidak ditemukan." });
         return Ok(result);
     }
@@ -47,7 +60,7 @@ public class GuestController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PostGuest([FromBody] CreateGuestRequest request)
     {
-        var result = await _guestService.CreateGuestAsync(request, GetUserId());
+        var result = await _guestService.CreateGuestAsync(request, GetUserId(), GetUserRole());
         if (result == null) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
         return CreatedAtAction(nameof(GetGuest), new { id = result.Id }, result);
     }
@@ -58,7 +71,7 @@ public class GuestController : ControllerBase
     [HttpPut("{id}/checkin")]
     public async Task<IActionResult> CheckInGuest(Guid id)
     {
-        var result = await _guestService.CheckInGuestAsync(id, GetUserId());
+        var result = await _guestService.CheckInGuestAsync(id, GetUserId(), GetUserRole());
         if (result == null) return NotFound(new { message = "Tamu tidak ditemukan atau bukan milik Anda." });
         return Ok(result);
     }
@@ -69,7 +82,7 @@ public class GuestController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGuest(Guid id)
     {
-        var success = await _guestService.DeleteGuestAsync(id, GetUserId());
+        var success = await _guestService.DeleteGuestAsync(id, GetUserId(), GetUserRole());
         if (!success) return NotFound(new { message = "Tamu tidak ditemukan atau bukan milik Anda." });
         return NoContent();
     }

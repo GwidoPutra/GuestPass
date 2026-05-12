@@ -125,7 +125,6 @@ try
 
     var app = builder.Build();
 
-    // Global Exception Handling Middleware
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
     // Swagger (aktif di semua environment untuk dokumentasi)

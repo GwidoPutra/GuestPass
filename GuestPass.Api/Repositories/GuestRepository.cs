@@ -14,6 +14,19 @@ public class GuestRepository : IGuestRepository
             ?? throw new InvalidOperationException("Connection string not found.");
     }
 
+    public async Task<IEnumerable<GuestResponse>> GetAllAsync()
+    {
+        const string sql = @"
+            SELECT id AS Id, eventid AS EventId, name AS Name, email AS Email,
+                   qrcodetoken AS QRCodeToken, ischeckedin AS IsCheckedIn,
+                   checkedinat AS CheckedInAt, createdat AS CreatedAt
+            FROM guests
+            ORDER BY createdat DESC";
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        return await connection.QueryAsync<GuestResponse>(sql);
+    }
+
     public async Task<IEnumerable<GuestResponse>> GetAllByEventAsync(Guid eventId)
     {
         const string sql = @"

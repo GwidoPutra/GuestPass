@@ -11,6 +11,7 @@ public class GuestService : IGuestService
     private readonly AppDbContext _context;
     private readonly IGuestRepository _repository;
     private readonly ILogger<GuestService> _logger;
+    private const string SuperAdminRole = "superadmin";
 
     public GuestService(AppDbContext context, IGuestRepository repository, ILogger<GuestService> logger)
     {
@@ -19,34 +20,49 @@ public class GuestService : IGuestService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<GuestResponse>> GetGuestsByEventAsync(Guid eventId, Guid ownerId)
+    public async Task<IEnumerable<GuestResponse>> GetAllGuestsAsync()
     {
-        // Validasi ownership event
-        var eventEntity = await _context.Events.FindAsync(eventId);
-        if (eventEntity == null || eventEntity.CreatedBy != ownerId)
-            return Enumerable.Empty<GuestResponse>();
+        _logger.LogInformation("SuperAdmin mengambil semua tamu");
+        return await _repository.GetAllAsync();
+    }
+
+    public async Task<IEnumerable<GuestResponse>> GetGuestsByEventAsync(Guid eventId, Guid ownerId, string role)
+    {
+        // SuperAdmin bisa akses semua event
+        if (role != SuperAdminRole)
+        {
+            var eventEntity = await _context.Events.FindAsync(eventId);
+            if (eventEntity == null || eventEntity.CreatedBy != ownerId)
+                return Enumerable.Empty<GuestResponse>();
+        }
 
         _logger.LogInformation("Mengambil daftar tamu untuk event {EventId}", eventId);
         return await _repository.GetAllByEventAsync(eventId);
     }
 
-    public async Task<GuestResponse?> GetGuestByIdAsync(Guid id, Guid ownerId)
+    public async Task<GuestResponse?> GetGuestByIdAsync(Guid id, Guid ownerId, string role)
     {
         var guest = await _repository.GetByIdAsync(id);
         if (guest == null) return null;
 
-        // Validasi ownership event
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        // SuperAdmin bisa akses semua guest
+        if (role != SuperAdminRole)
+        {
+            var eventEntity = await _context.Events.FindAsync(guest.EventId);
+            if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        }
 
         return guest;
     }
 
-    public async Task<GuestResponse?> CreateGuestAsync(CreateGuestRequest request, Guid ownerId)
+    public async Task<GuestResponse?> CreateGuestAsync(CreateGuestRequest request, Guid ownerId, string role)
     {
-        // Validasi ownership event
-        var eventEntity = await _context.Events.FindAsync(request.EventId);
-        if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        // SuperAdmin bisa tambah guest ke event manapun
+        if (role != SuperAdminRole)
+        {
+            var eventEntity = await _context.Events.FindAsync(request.EventId);
+            if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        }
 
         var guest = new Guest
         {
@@ -74,14 +90,17 @@ public class GuestService : IGuestService
         };
     }
 
-    public async Task<GuestResponse?> CheckInGuestAsync(Guid id, Guid ownerId)
+    public async Task<GuestResponse?> CheckInGuestAsync(Guid id, Guid ownerId, string role)
     {
         var guest = await _context.Guests.FindAsync(id);
         if (guest == null) return null;
 
-        // Validasi ownership event
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        // SuperAdmin bisa check-in guest manapun
+        if (role != SuperAdminRole)
+        {
+            var eventEntity = await _context.Events.FindAsync(guest.EventId);
+            if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
+        }
 
         if (guest.IsCheckedIn)
             throw new InvalidOperationException("Tamu sudah di-check-in sebelumnya.");
@@ -105,14 +124,17 @@ public class GuestService : IGuestService
         };
     }
 
-    public async Task<bool> DeleteGuestAsync(Guid id, Guid ownerId)
+    public async Task<bool> DeleteGuestAsync(Guid id, Guid ownerId, string role)
     {
         var guest = await _context.Guests.FindAsync(id);
         if (guest == null) return false;
 
-        // Validasi ownership event
-        var eventEntity = await _context.Events.FindAsync(guest.EventId);
-        if (eventEntity == null || eventEntity.CreatedBy != ownerId) return false;
+        // SuperAdmin bisa hapus guest manapun
+        if (role != SuperAdminRole)
+        {
+            var eventEntity = await _context.Events.FindAsync(guest.EventId);
+            if (eventEntity == null || eventEntity.CreatedBy != ownerId) return false;
+        }
 
         _context.Guests.Remove(guest);
         await _context.SaveChangesAsync();

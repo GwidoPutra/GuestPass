@@ -11,6 +11,7 @@ public class EventService : IEventService
     private readonly AppDbContext _context;
     private readonly IEventRepository _repository;
     private readonly ILogger<EventService> _logger;
+    private const string SuperAdminRole = "superadmin";
 
     public EventService(AppDbContext context, IEventRepository repository, ILogger<EventService> logger)
     {
@@ -19,17 +20,23 @@ public class EventService : IEventService
         _logger = logger;
     }
 
+    public async Task<IEnumerable<EventResponse>> GetAllEventsAsync()
+    {
+        _logger.LogInformation("SuperAdmin mengambil semua event");
+        return await _repository.GetAllAsync();
+    }
+
     public async Task<IEnumerable<EventResponse>> GetEventsByOwnerAsync(Guid ownerId)
     {
         _logger.LogInformation("Mengambil daftar event untuk owner {OwnerId}", ownerId);
         return await _repository.GetAllByOwnerAsync(ownerId);
     }
 
-    public async Task<EventResponse?> GetEventByIdAsync(Guid id, Guid ownerId)
+    public async Task<EventResponse?> GetEventByIdAsync(Guid id, Guid ownerId, string role)
     {
         var eventResponse = await _repository.GetByIdAsync(id);
         if (eventResponse == null) return null;
-        if (eventResponse.CreatedBy != ownerId) return null;
+        if (role != SuperAdminRole && eventResponse.CreatedBy != ownerId) return null;
         return eventResponse;
     }
 
@@ -59,11 +66,11 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<EventResponse?> UpdateEventAsync(Guid id, UpdateEventRequest request, Guid ownerId)
+    public async Task<EventResponse?> UpdateEventAsync(Guid id, UpdateEventRequest request, Guid ownerId, string role)
     {
         var existingEvent = await _context.Events.FindAsync(id);
         if (existingEvent == null) return null;
-        if (existingEvent.CreatedBy != ownerId) return null;
+        if (role != SuperAdminRole && existingEvent.CreatedBy != ownerId) return null;
 
         existingEvent.Name = request.Name;
         existingEvent.Location = request.Location;
@@ -84,11 +91,11 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<bool> DeleteEventAsync(Guid id, Guid ownerId)
+    public async Task<bool> DeleteEventAsync(Guid id, Guid ownerId, string role)
     {
         var existingEvent = await _context.Events.FindAsync(id);
         if (existingEvent == null) return false;
-        if (existingEvent.CreatedBy != ownerId) return false;
+        if (role != SuperAdminRole && existingEvent.CreatedBy != ownerId) return false;
 
         // Hapus juga semua guest terkait
         var guests = await _context.Guests.Where(g => g.EventId == id).ToListAsync();

@@ -4,6 +4,7 @@ namespace GuestPass.Api.Repositories;
 
 public interface IEventRepository
 {
+    Task<IEnumerable<EventResponse>> GetAllAsync();
     Task<IEnumerable<EventResponse>> GetAllByOwnerAsync(Guid ownerId);
     Task<EventResponse?> GetByIdAsync(Guid id);
 }

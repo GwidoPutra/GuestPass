@@ -19,13 +19,21 @@ public class EventController : ControllerBase
     }
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private string GetUserRole() => User.FindFirstValue(ClaimTypes.Role) ?? "panitia";
 
     /// <summary>
-    /// Mengambil semua event milik user yang sedang login.
+    /// Mengambil semua event. SuperAdmin melihat semua, user biasa hanya miliknya.
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetEvents()
     {
+        var role = GetUserRole();
+        if (role == "superadmin")
+        {
+            var allEvents = await _eventService.GetAllEventsAsync();
+            return Ok(allEvents);
+        }
+
         var events = await _eventService.GetEventsByOwnerAsync(GetUserId());
         return Ok(events);
     }
@@ -36,7 +44,7 @@ public class EventController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetEvent(Guid id)
     {
-        var result = await _eventService.GetEventByIdAsync(id, GetUserId());
+        var result = await _eventService.GetEventByIdAsync(id, GetUserId(), GetUserRole());
         if (result == null) return NotFound(new { message = "Event tidak ditemukan." });
         return Ok(result);
     }
@@ -57,7 +65,7 @@ public class EventController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> PutEvent(Guid id, [FromBody] UpdateEventRequest request)
     {
-        var result = await _eventService.UpdateEventAsync(id, request, GetUserId());
+        var result = await _eventService.UpdateEventAsync(id, request, GetUserId(), GetUserRole());
         if (result == null) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
         return Ok(result);
     }
@@ -68,7 +76,7 @@ public class EventController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteEvent(Guid id)
     {
-        var success = await _eventService.DeleteEventAsync(id, GetUserId());
+        var success = await _eventService.DeleteEventAsync(id, GetUserId(), GetUserRole());
         if (!success) return NotFound(new { message = "Event tidak ditemukan atau bukan milik Anda." });
         return NoContent();
     }

@@ -14,6 +14,18 @@ public class EventRepository : IEventRepository
             ?? throw new InvalidOperationException("Connection string not found.");
     }
 
+    public async Task<IEnumerable<EventResponse>> GetAllAsync()
+    {
+        const string sql = @"
+            SELECT id AS Id, name AS Name, location AS Location, 
+                   date AS Date, ownerid AS CreatedBy, createdat AS CreatedAt
+            FROM events
+            ORDER BY createdat DESC";
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        return await connection.QueryAsync<EventResponse>(sql);
+    }
+
     public async Task<IEnumerable<EventResponse>> GetAllByOwnerAsync(Guid ownerId)
     {
         const string sql = @"
