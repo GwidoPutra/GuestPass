@@ -192,9 +192,9 @@ namespace GuestPass.Api.Migrations
 
                     b.Property<string>("Role")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("user_role")
+                        .HasColumnType("text")
                         .HasColumnName("role")
-                        .HasDefaultValueSql("'panitia'::user_role");
+                        .HasDefaultValueSql("'panitia'");
 
                     b.Property<string>("Username")
                         .IsRequired()

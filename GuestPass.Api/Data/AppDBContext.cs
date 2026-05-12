@@ -20,8 +20,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
             entity.Property(e => e.Role)
-                .HasColumnType("user_role")
-                .HasDefaultValueSql("'panitia'::user_role")
+                .HasColumnType("text")
+                .HasDefaultValueSql("'panitia'")
                 .ValueGeneratedOnAdd();
 
             entity.HasIndex(e => e.Email).IsUnique();

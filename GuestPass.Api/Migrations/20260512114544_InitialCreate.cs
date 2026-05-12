@@ -11,7 +11,7 @@ namespace GuestPass.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Cleanup: drop tables from previous failed migration
+            // Cleanup: drop tables from previous failed migrations
             migrationBuilder.Sql("DROP TABLE IF EXISTS \"Events\" CASCADE;");
             migrationBuilder.Sql("DROP TABLE IF EXISTS \"Users\" CASCADE;");
             migrationBuilder.Sql("DROP TABLE IF EXISTS \"events\" CASCADE;");
@@ -32,7 +32,7 @@ namespace GuestPass.Api.Migrations
                     email = table.Column<string>(type: "text", nullable: false),
                     passwordhash = table.Column<string>(type: "text", nullable: false),
                     fullname = table.Column<string>(type: "text", nullable: false),
-                    role = table.Column<string>(type: "user_role", nullable: true, defaultValueSql: "'panitia'::user_role"),
+                    role = table.Column<string>(type: "text", nullable: true, defaultValueSql: "'panitia'"),
                     isapproved = table.Column<bool>(type: "boolean", nullable: false),
                     createdat = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },

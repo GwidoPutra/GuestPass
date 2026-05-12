@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GuestPass.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260512114047_InitialCreate")]
+    [Migration("20260512114544_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -195,9 +195,9 @@ namespace GuestPass.Api.Migrations
 
                     b.Property<string>("Role")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("user_role")
+                        .HasColumnType("text")
                         .HasColumnName("role")
-                        .HasDefaultValueSql("'panitia'::user_role");
+                        .HasDefaultValueSql("'panitia'");
 
                     b.Property<string>("Username")
                         .IsRequired()
