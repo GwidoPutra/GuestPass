@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GuestPass Frontend Web
 
-## Getting Started
+Aplikasi web untuk manajemen tamu event dengan QR Code check-in. Dibangun dengan Next.js 16, React 19, dan Tailwind CSS.
 
-First, run the development server:
+## Teknologi Utama
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Teknologi | Versi | Fungsi |
+|-----------|-------|--------|
+| Next.js | 16.2 | Framework (App Router) |
+| React | 19.2 | UI Library |
+| TypeScript | 5.x | Type safety |
+| Tailwind CSS | 4.x | Styling (utility-first) |
+| Axios | 1.16 | HTTP client + JWT interceptor |
+| shadcn/ui | 4.7 | Component library |
+| Lucide React | 1.14 | Icon library |
+| qrcode.react | 4.2 | QR code generator |
+
+## Arsitektur
+
+```
+src/
+├── app/                    → Pages & layouts (App Router)
+│   ├── layout.tsx          → Root layout + metadata + font
+│   ├── providers.tsx       → AuthProvider + ToastProvider
+│   ├── globals.css         → Theme variables + animations
+│   ├── login/              → Halaman login
+│   ├── register/           → Halaman register
+│   ├── not-found.tsx       → Halaman 404
+│   └── dashboard/
+│       ├── layout.tsx      → Sidebar + TopBar shell
+│       ├── page.tsx        → Dashboard / Ringkasan
+│       ├── events/         → CRUD event + manajemen tamu
+│       └── committees/     → Manajemen panitia
+├── components/
+│   ├── ui/                 → shadcn/ui components (button, card, dialog, dll)
+│   ├── sidebar.tsx         → Navigasi sidebar
+│   ├── topbar.tsx          → Header + dark mode toggle + logout
+│   └── breadcrumb.tsx      → Breadcrumb navigasi
+└── lib/
+    ├── api.ts              → Axios instance + JWT interceptor
+    ├── auth-context.tsx    → Auth state management (Context API)
+    ├── auth-service.ts     → Login/register API calls
+    ├── event-service.ts    → Event CRUD API calls
+    ├── guest-service.ts    → Guest CRUD + check-in API calls
+    ├── profile-service.ts  → Profile/panitia API calls
+    ├── toast-context.tsx   → Toast notification system
+    ├── types.ts            → TypeScript interfaces
+    └── utils.ts            → Utility functions (cn)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Pola Desain
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **App Router** — File-based routing dengan layouts
+- **React Context API** — State management (auth + toast)
+- **Service Pattern** — API calls terpisah di `lib/`
+- **Component Composition** — shadcn/ui + custom components
+- **Server/Client Components** — Server by default, `"use client"` hanya saat diperlukan
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Fitur
 
-## Learn More
+| # | Fitur | Deskripsi |
+|---|-------|-----------|
+| 1 | Login & Register | Autentikasi JWT dengan validasi form |
+| 2 | Dashboard | Statistik event, tamu, check-in rate |
+| 3 | Manajemen Event | CRUD lengkap dengan konfirmasi hapus |
+| 4 | Manajemen Tamu | Tambah, check-in, hapus, lihat QR code |
+| 5 | QR Code | Generate & tampilkan QR unik per tamu |
+| 6 | Copy Token | Salin QR token ke clipboard |
+| 7 | Manajemen Panitia | Approve/revoke akun, hapus (admin only) |
+| 8 | Dark Mode | Toggle tema gelap/terang |
+| 9 | Breadcrumb | Navigasi hierarkis di semua halaman |
+| 10 | Responsif | Desktop + tablet layout |
+| 11 | Feedback Visual | Loading skeleton, toast, error states |
 
-To learn more about Next.js, take a look at the following resources:
+## Setup Lokal
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prasyarat
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Node.js](https://nodejs.org/) 18+ 
+- Backend GuestPass API berjalan di localhost
 
-## Deploy on Vercel
+### Langkah-langkah
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/GwidoPutra/GuestPass.git
+   cd GuestPass/guestpass-frontend
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi environment**
+   
+   Buat file `.env.local`:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+   ```
+
+4. **Jalankan development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Akses aplikasi**
+   ```
+   http://localhost:3000
+   ```
+
+### Build Production
+
+```bash
+npm run build
+npm start
+```
+
+## Deployment (Vercel)
+
+1. Push repository ke GitHub
+2. Buka [vercel.com](https://vercel.com) → Import Project
+3. Pilih repository `GuestPass`
+4. Set **Root Directory** ke `guestpass-frontend`
+5. Set environment variable:
+   - `NEXT_PUBLIC_API_URL` = URL backend API yang sudah di-deploy
+6. Deploy
+
+## Color Palette
+
+| Warna | Hex | Penggunaan |
+|-------|-----|------------|
+| Navy | #003049 | Primary, sidebar, buttons |
+| Red | #D62828 | Destructive, error states |
+| Orange | #F77F00 | Accent, chart highlights |
+| Gold | #FCBF49 | Secondary accent, active states |
+
+## UI/UX
+
+Aplikasi ini dibangun dengan prinsip UI intuitif:
+
+- **Kejelasan Fungsi** — Setiap elemen memiliki affordance yang jelas, error messages spesifik, empty states informatif
+- **Konsistensi Elemen** — Spacing scale konsisten, typography hierarchy terjaga, badge/status colors semantic
+- **Estetika Visual** — Whitespace generous, subtle animations, glass morphism, card hover effects
+
+## Scripts
+
+| Command | Deskripsi |
+|---------|-----------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm start` | Start production server |
+| `npm run lint` | Jalankan ESLint |
+
+## Lisensi
+
+MIT License
