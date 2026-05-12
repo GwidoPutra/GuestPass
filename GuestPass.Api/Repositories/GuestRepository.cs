@@ -53,4 +53,17 @@ public class GuestRepository : IGuestRepository
         await using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryFirstOrDefaultAsync<GuestResponse>(sql, new { Id = id });
     }
+
+    public async Task<GuestResponse?> GetByTokenAsync(string token)
+    {
+        const string sql = @"
+            SELECT id AS Id, eventid AS EventId, name AS Name, email AS Email,
+                   qrcodetoken AS QRCodeToken, ischeckedin AS IsCheckedIn,
+                   checkedinat AS CheckedInAt, createdat AS CreatedAt
+            FROM guests
+            WHERE qrcodetoken = @Token";
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        return await connection.QueryFirstOrDefaultAsync<GuestResponse>(sql, new { Token = token });
+    }
 }

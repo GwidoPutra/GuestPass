@@ -86,4 +86,15 @@ public class GuestController : ControllerBase
         if (!success) return NotFound(new { message = "Tamu tidak ditemukan atau bukan milik Anda." });
         return NoContent();
     }
+
+    /// <summary>
+    /// Check-in tamu berdasarkan QR code token. Digunakan saat scan QR.
+    /// </summary>
+    [HttpPost("checkin-by-token")]
+    public async Task<IActionResult> CheckInByToken([FromBody] CheckInByTokenRequest request)
+    {
+        var result = await _guestService.CheckInByTokenAsync(request.Token);
+        if (result == null) return NotFound(new { message = "QR code tidak valid atau tamu tidak ditemukan." });
+        return Ok(result);
+    }
 }

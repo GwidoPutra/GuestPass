@@ -7,4 +7,5 @@ public interface IGuestRepository
     Task<IEnumerable<GuestResponse>> GetAllAsync();
     Task<IEnumerable<GuestResponse>> GetAllByEventAsync(Guid eventId);
     Task<GuestResponse?> GetByIdAsync(Guid id);
+    Task<GuestResponse?> GetByTokenAsync(string token);
 }

@@ -10,13 +10,15 @@ public class GuestService : IGuestService
 {
     private readonly AppDbContext _context;
     private readonly IGuestRepository _repository;
+    private readonly IEmailService _emailService;
     private readonly ILogger<GuestService> _logger;
     private const string SuperAdminRole = "superadmin";
 
-    public GuestService(AppDbContext context, IGuestRepository repository, ILogger<GuestService> logger)
+    public GuestService(AppDbContext context, IGuestRepository repository, IEmailService emailService, ILogger<GuestService> logger)
     {
         _context = context;
         _repository = repository;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -58,11 +60,11 @@ public class GuestService : IGuestService
     public async Task<GuestResponse?> CreateGuestAsync(CreateGuestRequest request, Guid ownerId, string role)
     {
         // SuperAdmin bisa tambah guest ke event manapun
-        if (role != SuperAdminRole)
-        {
-            var eventEntity = await _context.Events.FindAsync(request.EventId);
-            if (eventEntity == null || eventEntity.CreatedBy != ownerId) return null;
-        }
+        var eventEntity = await _context.Events.FindAsync(request.EventId);
+        if (eventEntity == null) return null;
+
+        if (role != SuperAdminRole && eventEntity.CreatedBy != ownerId)
+            return null;
 
         var guest = new Guest
         {
@@ -76,6 +78,16 @@ public class GuestService : IGuestService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Tamu {GuestId} berhasil ditambahkan ke event {EventId}", guest.Id, request.EventId);
+
+        // Kirim email QR code ke tamu
+        try
+        {
+            await _emailService.SendQRCodeEmailAsync(guest.Email, guest.Name, eventEntity.Name, guest.QRCodeToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Gagal mengirim email QR code ke {Email}, tamu tetap tersimpan", guest.Email);
+        }
 
         return new GuestResponse
         {
@@ -141,5 +153,35 @@ public class GuestService : IGuestService
 
         _logger.LogInformation("Tamu {GuestId} berhasil dihapus", id);
         return true;
+    }
+
+    public async Task<GuestResponse?> CheckInByTokenAsync(string token)
+    {
+        var guestResponse = await _repository.GetByTokenAsync(token);
+        if (guestResponse == null) return null;
+
+        var guest = await _context.Guests.FindAsync(guestResponse.Id);
+        if (guest == null) return null;
+
+        if (guest.IsCheckedIn)
+            throw new InvalidOperationException("Tamu sudah di-check-in sebelumnya.");
+
+        guest.IsCheckedIn = true;
+        guest.CheckedInAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Tamu {GuestId} berhasil check-in via token", guest.Id);
+
+        return new GuestResponse
+        {
+            Id = guest.Id,
+            EventId = guest.EventId,
+            Name = guest.Name,
+            Email = guest.Email,
+            QRCodeToken = guest.QRCodeToken,
+            IsCheckedIn = guest.IsCheckedIn,
+            CheckedInAt = guest.CheckedInAt,
+            CreatedAt = guest.CreatedAt
+        };
     }
 }

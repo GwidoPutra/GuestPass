@@ -122,6 +122,7 @@ try
     builder.Services.AddScoped<IEventService, EventService>();
     builder.Services.AddScoped<IGuestService, GuestService>();
     builder.Services.AddScoped<IProfileService, ProfileService>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
 
     var app = builder.Build();
 
