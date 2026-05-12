@@ -5,9 +5,11 @@ using GuestPass.Api.Services;
 namespace GuestPass.Api.Controllers;
 
 /// <summary>
-/// Controller untuk mengelola akun panitia. Hanya admin yang bisa mengakses.
+/// Controller untuk mengelola akun panitia.
+/// GET: semua authenticated user bisa akses.
+/// PUT/DELETE: hanya superadmin yang bisa mengubah/menghapus.
 /// </summary>
-[Authorize(Roles = "admin")]
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ProfileController : ControllerBase
@@ -41,8 +43,9 @@ public class ProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Menghapus akun panitia.
+    /// Menghapus akun panitia. Hanya superadmin.
     /// </summary>
+    [Authorize(Roles = "superadmin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProfile(Guid id)
     {
@@ -52,8 +55,9 @@ public class ProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Toggle status persetujuan akun panitia.
+    /// Toggle status persetujuan akun panitia. Hanya superadmin.
     /// </summary>
+    [Authorize(Roles = "superadmin")]
     [HttpPut("{id}/approve")]
     public async Task<IActionResult> ToggleApproval(Guid id)
     {
