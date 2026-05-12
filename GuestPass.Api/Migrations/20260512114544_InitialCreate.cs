@@ -11,15 +11,6 @@ namespace GuestPass.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Cleanup: drop tables from previous failed migrations
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"Events\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"Users\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"events\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"users\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"guests\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"profiles\" CASCADE;");
-            migrationBuilder.Sql("DROP TABLE IF EXISTS \"event_moments\" CASCADE;");
-
             // Enable uuid extension
             migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";");
 
