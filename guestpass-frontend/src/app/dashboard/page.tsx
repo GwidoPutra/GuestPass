@@ -7,8 +7,8 @@ import { getEvents } from "@/lib/event-service";
 import { getGuests } from "@/lib/guest-service";
 import { Event, Guest } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Calendar, Users, UserCheck, Plus, ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { Calendar, Users, UserCheck, Plus, ArrowRight, TrendingUp } from "lucide-react";
 
 interface DashboardStats {
   totalEvents: number;
@@ -54,71 +54,74 @@ export default function DashboardPage() {
     });
   };
 
+  const checkInRate = stats.totalGuests > 0 ? Math.round((stats.checkedIn / stats.totalGuests) * 100) : 0;
+
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-8 max-w-5xl animate-in-page">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Overview</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Welcome back, <span className="capitalize">{user?.role}</span>. Here&apos;s what&apos;s happening.
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Overview</h1>
+        <p className="text-sm text-muted-foreground">
+          Welcome back, <span className="capitalize font-medium text-foreground/80">{user?.role}</span>. Here&apos;s what&apos;s happening.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="card-hover">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Events</p>
-                <p className="text-2xl font-semibold mt-1">
-                  {isLoading ? <span className="inline-block w-8 h-7 bg-muted rounded animate-pulse" /> : stats.totalEvents}
+              <div className="space-y-1">
+                <p className="text-[13px] text-muted-foreground font-medium">Events</p>
+                <p className="text-3xl font-semibold tracking-tight">
+                  {isLoading ? <span className="inline-block w-10 h-8 bg-muted rounded-md animate-pulse" /> : stats.totalEvents}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-xl bg-primary/8 flex items-center justify-center ring-1 ring-primary/10">
                 <Calendar className="w-5 h-5 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="card-hover">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Guests</p>
-                <p className="text-2xl font-semibold mt-1">
-                  {isLoading ? <span className="inline-block w-8 h-7 bg-muted rounded animate-pulse" /> : stats.totalGuests}
+              <div className="space-y-1">
+                <p className="text-[13px] text-muted-foreground font-medium">Total Guests</p>
+                <p className="text-3xl font-semibold tracking-tight">
+                  {isLoading ? <span className="inline-block w-10 h-8 bg-muted rounded-md animate-pulse" /> : stats.totalGuests}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-chart-2/10 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-xl bg-chart-2/8 flex items-center justify-center ring-1 ring-chart-2/10">
                 <Users className="w-5 h-5 text-chart-2" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="card-hover">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Checked In</p>
-                <p className="text-2xl font-semibold mt-1">
-                  {isLoading ? (
-                    <span className="inline-block w-8 h-7 bg-muted rounded animate-pulse" />
-                  ) : (
-                    <>
-                      {stats.checkedIn}
-                      {stats.totalGuests > 0 && (
-                        <span className="text-sm font-normal text-muted-foreground ml-1.5">
-                          ({Math.round((stats.checkedIn / stats.totalGuests) * 100)}%)
-                        </span>
-                      )}
-                    </>
+              <div className="space-y-1">
+                <p className="text-[13px] text-muted-foreground font-medium">Checked In</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-semibold tracking-tight">
+                    {isLoading ? (
+                      <span className="inline-block w-10 h-8 bg-muted rounded-md animate-pulse" />
+                    ) : (
+                      stats.checkedIn
+                    )}
+                  </p>
+                  {!isLoading && stats.totalGuests > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-xs font-medium text-chart-2">
+                      <TrendingUp className="w-3 h-3" />
+                      {checkInRate}%
+                    </span>
                   )}
-                </p>
+                </div>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-chart-5/10 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-xl bg-chart-5/8 flex items-center justify-center ring-1 ring-chart-5/10">
                 <UserCheck className="w-5 h-5 text-chart-5" />
               </div>
             </div>
@@ -130,9 +133,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent events */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base font-medium">Recent Events</CardTitle>
-            <Link href="/dashboard/events" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+          <CardHeader className="flex-row items-center justify-between pb-4">
+            <CardTitle className="text-[15px] font-semibold">Recent Events</CardTitle>
+            <Link href="/dashboard/events" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium">
               View all <ArrowRight className="w-3 h-3" />
             </Link>
           </CardHeader>
@@ -140,13 +143,16 @@ export default function DashboardPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                  <div key={i} className="h-14 bg-muted/60 rounded-lg animate-pulse" />
                 ))}
               </div>
             ) : recentEvents.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No events yet.</p>
-                <Link href="/dashboard/events/create" className={buttonVariants({ size: "sm", className: "mt-3" })}>
+              <div className="text-center py-12">
+                <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+                  <Calendar className="w-5 h-5 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">No events yet.</p>
+                <Link href="/dashboard/events/create" className={buttonVariants({ size: "sm" })}>
                   <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Event
                 </Link>
               </div>
@@ -156,18 +162,21 @@ export default function DashboardPage() {
                   <Link
                     key={event.id}
                     href={`/dashboard/events/${event.id}`}
-                    className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center justify-between py-3 px-3 -mx-3 rounded-lg hover:bg-accent/60 transition-all duration-200 group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-xs font-semibold text-primary ring-1 ring-primary/10">
                         {event.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{event.name}</p>
+                        <p className="text-sm font-medium group-hover:text-primary transition-colors">{event.name}</p>
                         <p className="text-xs text-muted-foreground">{event.location}</p>
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-all" />
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -177,18 +186,18 @@ export default function DashboardPage() {
 
         {/* Quick actions */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-[15px] font-semibold">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Link href="/dashboard/events/create" className={buttonVariants({ variant: "default", size: "sm", className: "w-full justify-start" })}>
-              <Plus className="w-3.5 h-3.5 mr-2" /> New Event
+            <Link href="/dashboard/events/create" className={buttonVariants({ variant: "default", size: "sm", className: "w-full justify-start h-9" })}>
+              <Plus className="w-3.5 h-3.5 mr-2.5" /> New Event
             </Link>
-            <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start" })}>
-              <Calendar className="w-3.5 h-3.5 mr-2" /> Manage Events
+            <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start h-9" })}>
+              <Calendar className="w-3.5 h-3.5 mr-2.5" /> Manage Events
             </Link>
-            <Link href="/dashboard/committees" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start" })}>
-              <Users className="w-3.5 h-3.5 mr-2" /> Manage Committees
+            <Link href="/dashboard/committees" className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-start h-9" })}>
+              <Users className="w-3.5 h-3.5 mr-2.5" /> Manage Committees
             </Link>
           </CardContent>
         </Card>

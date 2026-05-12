@@ -9,7 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 
 export default function CreateGuestPage() {
   const params = useParams();
@@ -45,32 +45,49 @@ export default function CreateGuestPage() {
   };
 
   return (
-    <div className="max-w-lg space-y-6">
-      <Link href={`/dashboard/events/${eventId}/guests`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="max-w-lg space-y-6 animate-in-page">
+      <Link href={`/dashboard/events/${eventId}/guests`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to guests
       </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add Guest</CardTitle>
-          <CardDescription>A unique QR code will be generated automatically.</CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">Add Guest</CardTitle>
+          <CardDescription className="text-[13px]">A unique QR code will be generated automatically.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="rounded-lg bg-destructive/8 border border-destructive/15 px-4 py-3 text-sm text-destructive flex items-start gap-2">
+                <div className="w-1 h-1 rounded-full bg-destructive mt-1.5 shrink-0" />
+                {error}
+              </div>
+            )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="Guest full name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="name" className="text-[13px] font-medium">Full Name</Label>
+              <Input id="name" placeholder="Guest full name" value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="guest@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label htmlFor="email" className="text-[13px] font-medium">Email</Label>
+              <Input id="email" type="email" placeholder="guest@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={isLoading}>{isLoading ? "Adding..." : "Add Guest"}</Button>
-              <Link href={`/dashboard/events/${eventId}/guests`} className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+            <div className="flex gap-3 pt-3">
+              <Button type="submit" disabled={isLoading} className="h-9">
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Adding...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Add Guest
+                  </span>
+                )}
+              </Button>
+              <Link href={`/dashboard/events/${eventId}/guests`} className={buttonVariants({ variant: "outline", className: "h-9" })}>Cancel</Link>
             </div>
           </form>
         </CardContent>

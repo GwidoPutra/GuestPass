@@ -9,7 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 
 export default function EditEventPage() {
   const params = useParams();
@@ -64,44 +64,61 @@ export default function EditEventPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-lg space-y-4">
-        <div className="h-5 w-24 bg-muted rounded animate-pulse" />
-        <div className="h-64 bg-muted rounded-lg animate-pulse" />
+      <div className="max-w-lg space-y-6 animate-in-page">
+        <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+        <div className="h-72 bg-muted/40 rounded-xl animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg space-y-6">
-      <Link href={`/dashboard/events/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="max-w-lg space-y-6 animate-in-page">
+      <Link href={`/dashboard/events/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to event
       </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit Event</CardTitle>
-          <CardDescription>Update event details below.</CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">Edit Event</CardTitle>
+          <CardDescription className="text-[13px]">Update event details below.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="rounded-lg bg-destructive/8 border border-destructive/15 px-4 py-3 text-sm text-destructive flex items-start gap-2">
+                <div className="w-1 h-1 rounded-full bg-destructive mt-1.5 shrink-0" />
+                {error}
+              </div>
+            )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Event Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="name" className="text-[13px] font-medium">Event Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+              <Label htmlFor="location" className="text-[13px] font-medium">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="h-10" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date & Time</Label>
-              <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Label htmlFor="date" className="text-[13px] font-medium">Date & Time</Label>
+              <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="h-10" />
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</Button>
-              <Link href={`/dashboard/events/${id}`} className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+            <div className="flex gap-3 pt-3">
+              <Button type="submit" disabled={isSaving} className="h-9">
+                {isSaving ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Save className="w-3.5 h-3.5" />
+                    Save Changes
+                  </span>
+                )}
+              </Button>
+              <Link href={`/dashboard/events/${id}`} className={buttonVariants({ variant: "outline", className: "h-9" })}>Cancel</Link>
             </div>
           </form>
         </CardContent>

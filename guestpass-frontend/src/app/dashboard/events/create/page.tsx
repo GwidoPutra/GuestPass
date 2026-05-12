@@ -9,7 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -48,62 +48,76 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="max-w-lg space-y-6">
-      <div>
-        <Link
-          href="/dashboard/events"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to events
-        </Link>
-      </div>
+    <div className="max-w-lg space-y-6 animate-in-page">
+      <Link
+        href="/dashboard/events"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to events
+      </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle>Create Event</CardTitle>
-          <CardDescription>Add a new event to start managing guests.</CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">Create Event</CardTitle>
+          <CardDescription className="text-[13px]">Add a new event to start managing guests.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
+              <div className="rounded-lg bg-destructive/8 border border-destructive/15 px-4 py-3 text-sm text-destructive flex items-start gap-2">
+                <div className="w-1 h-1 rounded-full bg-destructive mt-1.5 shrink-0" />
+                {error}
+              </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Event Name</Label>
+              <Label htmlFor="name" className="text-[13px] font-medium">Event Name</Label>
               <Input
                 id="name"
                 placeholder="e.g. Tech Conference 2026"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location" className="text-[13px] font-medium">Location</Label>
               <Input
                 id="location"
                 placeholder="e.g. Convention Center, Jakarta"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                className="h-10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date">Date & Time</Label>
+              <Label htmlFor="date" className="text-[13px] font-medium">Date & Time</Label>
               <Input
                 id="date"
                 type="datetime-local"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                className="h-10"
               />
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Event"}
+            <div className="flex gap-3 pt-3">
+              <Button type="submit" disabled={isLoading} className="h-9">
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Creating...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Plus className="w-3.5 h-3.5" />
+                    Create Event
+                  </span>
+                )}
               </Button>
-              <Link href="/dashboard/events" className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+              <Link href="/dashboard/events" className={buttonVariants({ variant: "outline", className: "h-9" })}>Cancel</Link>
             </div>
           </form>
         </CardContent>
