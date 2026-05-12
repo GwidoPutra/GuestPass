@@ -35,8 +35,10 @@ export default function CreateGuestPage() {
       router.push(`/dashboard/events/${eventId}/guests`);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Gagal menambahkan tamu.");
+        const axiosErr = err as { response?: { data?: { message?: string } | string } };
+        const data = axiosErr.response?.data;
+        const message = typeof data === "string" ? data : data?.message;
+        setError(message || "Gagal menambahkan tamu.");
       } else {
         setError("Kesalahan jaringan.");
       }

@@ -66,8 +66,10 @@ export default function GuestsPage() {
       showToast("Tamu berhasil check-in.", "success");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const axiosErr = err as { response?: { data?: string } };
-        showToast(axiosErr.response?.data || "Check-in gagal.", "error");
+        const axiosErr = err as { response?: { data?: { message?: string } | string } };
+        const data = axiosErr.response?.data;
+        const message = typeof data === "string" ? data : data?.message;
+        showToast(message || "Check-in gagal.", "error");
       } else {
         showToast("Check-in gagal.", "error");
       }

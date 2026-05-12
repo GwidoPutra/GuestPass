@@ -37,8 +37,15 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const axiosErr = err as { response?: { data?: string; status?: number } };
-        setError(axiosErr.response?.data || "Login gagal. Periksa kembali kredensial Anda.");
+        const axiosErr = err as { response?: { data?: { message?: string } | string; status?: number } };
+        const data = axiosErr.response?.data;
+        if (typeof data === "string") {
+          setError(data || "Login gagal. Periksa kembali kredensial Anda.");
+        } else if (data && typeof data === "object" && "message" in data) {
+          setError(data.message || "Login gagal. Periksa kembali kredensial Anda.");
+        } else {
+          setError("Login gagal. Periksa kembali kredensial Anda.");
+        }
       } else {
         setError("Terjadi kesalahan jaringan. Coba lagi nanti.");
       }

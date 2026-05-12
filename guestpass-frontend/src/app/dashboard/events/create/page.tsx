@@ -38,8 +38,10 @@ export default function CreateEventPage() {
       router.push("/dashboard/events");
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const axiosErr = err as { response?: { data?: string } };
-        setError(axiosErr.response?.data || "Gagal membuat event.");
+        const axiosErr = err as { response?: { data?: { message?: string } | string } };
+        const data = axiosErr.response?.data;
+        const message = typeof data === "string" ? data : data?.message;
+        setError(message || "Gagal membuat event.");
       } else {
         setError("Kesalahan jaringan.");
       }
