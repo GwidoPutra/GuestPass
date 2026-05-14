@@ -18,7 +18,7 @@ Sistem terdiri dari 3 komponen:
 | Backend API (Swagger) | https://guestpass-production.up.railway.app/swagger |
 | Backend Health Check | https://guestpass-production.up.railway.app/health |
 | Frontend Web | https://guestpass-frontend.vercel.app |
-| Mobile APK | Lihat instruksi build di `guestpass-mobile/README.md` |
+| Mobile APK | [Download APK](https://github.com/GwidoPutra/GuestPass/releases/download/v1.0.0/app-release.apk) |
 
 ### Akun Demo
 
