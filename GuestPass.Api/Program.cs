@@ -127,11 +127,15 @@ try
 
     var app = builder.Build();
 
-    // Auto-migrate database
-    using (var scope = app.Services.CreateScope())
+    // Auto-migrate database (skip jika SKIP_MIGRATION=true)
+    var skipMigration = Environment.GetEnvironmentVariable("SKIP_MIGRATION");
+    if (skipMigration?.ToLower() != "true")
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        dbContext.Database.Migrate();
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Database.Migrate();
+        }
     }
 
     app.UseMiddleware<GlobalExceptionMiddleware>();
