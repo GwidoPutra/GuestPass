@@ -1,7 +1,7 @@
 /// Konfigurasi API untuk koneksi ke backend
 class ApiConfig {
   // Production URL (Railway) - ganti dengan URL Railway kamu setelah deploy
-  static const String productionUrl = 'https://guestpass-api-production.up.railway.app/api';
+  static const String productionUrl = 'https://guestpass-production.up.railway.app/api';
 
   // Local development URL
   // Untuk device fisik, gunakan IP lokal komputer di jaringan WiFi yang sama
