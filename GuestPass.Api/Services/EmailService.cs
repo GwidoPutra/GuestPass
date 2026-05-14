@@ -36,7 +36,7 @@ public class EmailService : IEmailService
         var formattedDate = eventDate.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"));
         var formattedTime = eventDate.ToString("HH:mm") + " WIB";
 
-        // Build HTML email with inline base64 QR code
+        // Build HTML email
         var htmlBody = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
                 <h2 style='color: #333;'>Halo, {guestName}!</h2>
@@ -60,10 +60,7 @@ public class EmailService : IEmailService
                     </table>
                 </div>
 
-                <p>Berikut adalah QR Code untuk check-in Anda pada hari acara:</p>
-                <div style='text-align: center; margin: 20px 0;'>
-                    <img src='data:image/png;base64,{qrCodeBase64}' alt='QR Code' style='width: 250px; height: 250px;' />
-                </div>
+                <p>Berikut adalah QR Code untuk check-in Anda pada hari acara (lihat lampiran):</p>
                 <p style='text-align: center; font-size: 14px; color: #666;'>
                     Kode: <strong>{qrCodeToken}</strong>
                 </p>
@@ -84,7 +81,8 @@ public class EmailService : IEmailService
                 sender = new { name = senderName, email = senderEmail },
                 to = new[] { new { email = toEmail, name = guestName } },
                 subject = $"Undangan Event: {eventName} - QR Code Check-in Anda",
-                htmlContent = htmlBody
+                htmlContent = htmlBody,
+                attachment = new[] { new { content = qrCodeBase64, name = "qrcode-checkin.png" } }
             };
 
             var json = JsonSerializer.Serialize(payload);
