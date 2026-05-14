@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guestpass_mobile/config/theme.dart';
 import 'package:guestpass_mobile/data/models/event.dart';
 import 'package:guestpass_mobile/data/repositories/event_repository.dart';
 import 'package:guestpass_mobile/data/repositories/guest_repository.dart';
+import 'package:guestpass_mobile/logic/auth/auth_cubit.dart';
 import 'package:guestpass_mobile/utils/helpers.dart';
 
 /// Layar Dashboard / Ringkasan
@@ -23,6 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _checkedIn = 0;
   List<Event> _recentEvents = [];
 
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -30,7 +34,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       final events = await _eventRepo.getEvents();
       _recentEvents = events.take(5).toList();
@@ -52,8 +59,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 
@@ -62,6 +74,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ringkasan'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Apakah Anda yakin ingin keluar?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Batal'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        context.read<AuthCubit>().logout();
+                      },
+                      child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
@@ -80,6 +120,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                  ),
+                ),
 
               // Stats cards
               _buildStatsSection(),
