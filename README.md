@@ -20,6 +20,24 @@ Sistem terdiri dari 3 komponen:
 | Frontend Web | https://guestpass-frontend.vercel.app |
 | Mobile APK | Lihat instruksi build di `guestpass-mobile/README.md` |
 
+### Akun Demo
+
+Gunakan akun berikut untuk mengakses aplikasi (Web & Mobile):
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@guestpass.com` |
+| Password | `admin123` |
+| Role | Super Admin |
+
+Akun ini memiliki akses penuh ke semua fitur termasuk manajemen panitia.
+
+### Cara Menggunakan
+
+1. **Web Dashboard** — Buka https://guestpass-frontend.vercel.app → Login dengan akun di atas
+2. **Swagger API** — Buka https://guestpass-production.up.railway.app/swagger → Gunakan `POST /api/Auth/login` untuk mendapatkan token → Klik "Authorize" → Paste token
+3. **Mobile App** — Build APK (lihat instruksi di `guestpass-mobile/README.md`) → Install → Login dengan akun di atas
+
 ---
 
 ## Teknologi Utama
