@@ -25,6 +25,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // Railway menyediakan PORT env var, gunakan jika tersedia
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    builder.WebHost.UseUrls($"http://+:{port}");
+
     // Gunakan Serilog sebagai logger
     builder.Host.UseSerilog();
 
