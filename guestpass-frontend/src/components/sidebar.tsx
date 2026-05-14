@@ -24,7 +24,7 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-sidebar-border bg-sidebar">
       {/* Logo */}
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+        <Link href="/dashboard" prefetch={false} className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
             <Image
               src="/logo.png"
@@ -49,6 +49,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
                 active
                   ? "bg-sidebar-accent text-sidebar-primary shadow-sm"
