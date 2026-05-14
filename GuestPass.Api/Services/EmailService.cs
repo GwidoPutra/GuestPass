@@ -78,8 +78,6 @@ public class EmailService : IEmailService
         try
         {
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("api-key", apiKey);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var payload = new
             {
@@ -90,9 +88,15 @@ public class EmailService : IEmailService
             };
 
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", apiKey);
+            request.Headers.Add("accept", "application/json");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("Mengirim email via Brevo ke {Email}, API key length: {Length}", toEmail, apiKey?.Length ?? 0);
+
+            var response = await client.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
