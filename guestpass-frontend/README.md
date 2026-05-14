@@ -118,13 +118,16 @@ npm start
 
 ## Deployment (Vercel)
 
-1. Push repository ke GitHub
-2. Buka [vercel.com](https://vercel.com) → Import Project
-3. Pilih repository `GuestPass`
-4. Set **Root Directory** ke `guestpass-frontend`
-5. Set environment variable:
-   - `NEXT_PUBLIC_API_URL` = URL backend API yang sudah di-deploy
-6. Deploy
+**Live URL:** https://guestpass-frontend.vercel.app
+
+1. Import repository di [Vercel](https://vercel.com)
+2. Pilih repository `GuestPass`
+3. Set **Root Directory** ke `guestpass-frontend`
+4. Set environment variable:
+   - `NEXT_PUBLIC_API_URL` = `https://guestpass-production.up.railway.app/api`
+5. Deploy
+
+Vercel auto-deploy setiap push ke `main`.
 
 ## Color Palette
 

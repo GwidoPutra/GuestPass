@@ -214,17 +214,31 @@ Semua error ditangani oleh `GlobalExceptionMiddleware`:
 
 ## Deployment
 
-### Render.com
+### Railway (Production)
 
-1. Buat **Web Service** baru di [Render Dashboard](https://dashboard.render.com)
-2. Connect repository GitHub
-3. Pilih **Docker** sebagai environment
+Backend di-deploy menggunakan Docker di [Railway](https://railway.app):
+
+**Live URL:** https://guestpass-production.up.railway.app
+
+1. Buat project di Railway → Deploy from GitHub Repo
+2. Set **Root Directory**: `GuestPass.Api`
+3. Set **Watch Paths**: `/GuestPass.Api/**`
 4. Set environment variables:
-   - `ConnectionStrings__DefaultConnection` = connection string PostgreSQL
-   - `Jwt__Key` = secret key (min 32 karakter)
-   - `Jwt__Issuer` = `GuestPassApi`
-   - `Jwt__Audience` = `GuestPassApi`
-5. Deploy
+
+| Variable | Deskripsi |
+|----------|-----------|
+| `ConnectionStrings__DefaultConnection` | PostgreSQL connection string (Supabase) |
+| `Jwt__Key` | Secret key untuk signing JWT (min 32 chars) |
+| `Jwt__Issuer` | `GuestPassApi` |
+| `Jwt__Audience` | `GuestPassApi` |
+| `Email__BrevoApiKey` | API key Brevo untuk transactional email |
+| `Email__SenderEmail` | Email sender (harus terverifikasi di Brevo) |
+| `Email__SenderName` | Nama sender (default: GuestPass) |
+| `SKIP_MIGRATION` | `true` jika database sudah ada |
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+
+5. Generate public domain di Settings → Networking
+6. Railway auto-deploy setiap push ke `main`
 
 ### Environment Variables (Production)
 

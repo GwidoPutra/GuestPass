@@ -94,11 +94,16 @@ lib/
    
    Edit `lib/config/api_config.dart`:
    ```dart
-   // Untuk Android Emulator (localhost = 10.0.2.2)
-   static const String baseUrl = 'http://10.0.2.2:5000/api';
+   // Untuk production (Railway)
+   static const String productionUrl = 'https://guestpass-production.up.railway.app/api';
    
-   // Untuk device fisik (ganti dengan IP komputer Anda)
-   // static const String baseUrl = 'http://192.168.x.x:5000/api';
+   // Untuk development lokal
+   // Android Emulator: http://10.0.2.2:5203/api
+   // Device fisik: http://192.168.x.x:5203/api
+   static const String localUrl = 'http://192.168.1.16:5203/api';
+   
+   // Set ke true untuk production, false untuk development
+   static const bool useProduction = true;
    ```
 
 4. **Pastikan backend berjalan**
