@@ -21,8 +21,8 @@ public class EmailService : IEmailService
     public async Task SendQRCodeEmailAsync(string toEmail, string guestName, string eventName, string qrCodeToken, DateTimeOffset eventDate, string eventLocation)
     {
         var emailSettings = _configuration.GetSection("Email");
-        var apiKey = emailSettings["ResendApiKey"] ?? "";
-        var senderEmail = emailSettings["SenderEmail"] ?? "onboarding@resend.dev";
+        var apiKey = emailSettings["BrevoApiKey"] ?? "";
+        var senderEmail = emailSettings["SenderEmail"] ?? "gwidoputra@gmail.com";
         var senderName = emailSettings["SenderName"] ?? "GuestPass";
 
         // Generate QR code image
@@ -74,30 +74,31 @@ public class EmailService : IEmailService
                 </p>
             </div>";
 
-        // Send email via Resend API
+        // Send email via Brevo API
         try
         {
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Add("api-key", apiKey);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var payload = new
             {
-                from = $"{senderName} <{senderEmail}>",
-                to = new[] { toEmail },
+                sender = new { name = senderName, email = senderEmail },
+                to = new[] { new { email = toEmail, name = guestName } },
                 subject = $"Undangan Event: {eventName} - QR Code Check-in Anda",
-                html = htmlBody
+                htmlContent = htmlBody
             };
 
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("https://api.resend.com/emails", content);
+            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Resend API error: {StatusCode} - {Response}", response.StatusCode, responseBody);
-                throw new Exception($"Gagal mengirim email via Resend: {response.StatusCode} - {responseBody}");
+                _logger.LogError("Brevo API error: {StatusCode} - {Response}", response.StatusCode, responseBody);
+                throw new Exception($"Gagal mengirim email via Brevo: {response.StatusCode} - {responseBody}");
             }
 
             _logger.LogInformation("Email QR code berhasil dikirim ke {Email} untuk event {Event}", toEmail, eventName);
